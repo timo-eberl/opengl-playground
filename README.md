@@ -1,6 +1,6 @@
 # OpenGL Playground
 
-For now this I am experimenting here with OpenGL, loosely based on https://learnopengl.com/
+For now I am experimenting here with OpenGL, loosely based on https://learnopengl.com/
 
 ## Cloning
 
