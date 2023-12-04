@@ -1,16 +1,10 @@
-#include <glad/glad.h>
-// include glfw after glad
-#include <GLFW/glfw3.h>
-
 #include <iostream>
 
-#include "sample.h"
+#include "template_app.h"
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void process(GLFWwindow* window);
-void render(GLFWwindow* window);
+using namespace glpg;
 
-int glpg::empty_window() {
+int template_app::run() {
 	glfwInit();
 
 	// tell GLFW we are using OpenGL 4.6
@@ -47,17 +41,17 @@ int glpg::empty_window() {
 	return 0;
 }
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+void template_app::framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	glViewport(0, 0, width, height);
 }
 
-void process(GLFWwindow* window) {
+void template_app::process(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
 	}
 }
 
-void render(GLFWwindow* window) {
+void template_app::render(GLFWwindow* window) {
 	glClearColor(0.32f, 0.27f, 0.40f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 }
