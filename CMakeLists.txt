@@ -15,7 +15,7 @@ add_subdirectory(glad)
 # our project
 set(SOURCES
 	src/glpg/template_app/template_app.cpp
-	# src/glpg/hello_triangle/hello_triangle.cpp
+	src/glpg/hello_triangle/hello_triangle.cpp
 )
 add_executable(${PROJECT_NAME}
 	src/main.cpp
