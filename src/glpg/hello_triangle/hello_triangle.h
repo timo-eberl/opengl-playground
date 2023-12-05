@@ -7,8 +7,10 @@
 namespace glpg::hello_triangle {
 
 struct State {
-	GLuint program = 0;
-	GLuint vertex_array = 0;
+	GLuint program_0 = 0;
+	GLuint vertex_array_0 = 0;
+	GLuint program_1 = 0;
+	GLuint vertex_array_1 = 0;
 };
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
