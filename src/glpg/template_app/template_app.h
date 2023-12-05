@@ -6,9 +6,13 @@
 
 namespace glpg::template_app {
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void process(GLFWwindow* window);
-void render(GLFWwindow* window);
 int run();
+
+struct State {};
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void process(GLFWwindow* window, State& state);
+void render(GLFWwindow* window, State& state);
+void initialize(GLFWwindow* window, State& state);
 
 } // glpg::template_app
