@@ -16,6 +16,7 @@ add_subdirectory(glad)
 set(SOURCES
 	src/glpg/template_app/template_app.cpp
 	src/glpg/hello_triangle/hello_triangle.cpp
+	src/glpg/shader_intro/shader_intro.cpp
 )
 add_executable(${PROJECT_NAME}
 	src/main.cpp
