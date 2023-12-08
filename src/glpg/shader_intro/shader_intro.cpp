@@ -2,8 +2,6 @@
 #include <fstream>
 #include <sstream>
 #include <cmath>
-#include <sys/inotify.h>
-#include <unistd.h>
 
 #include "shader_intro.h"
 
