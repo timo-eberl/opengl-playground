@@ -15,7 +15,7 @@ add_subdirectory(glad)
 add_subdirectory(stb_image)
 
 # our project
-add_compile_definitions(_ASSETS_DIR=\"${PROJECT_SOURCE_DIR}/\")
+add_compile_definitions(_ASSETS_DIR=\"${PROJECT_SOURCE_DIR}/assets/\")
 set(SOURCES
 	src/glpg/shader_program.cpp
 	src/glpg/uniforms.cpp
