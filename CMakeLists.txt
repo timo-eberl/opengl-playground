@@ -13,7 +13,9 @@ add_subdirectory(glfw)
 add_subdirectory(glad)
 
 # our project
+add_compile_definitions(_ASSETS_DIR=\"${PROJECT_SOURCE_DIR}/\")
 set(SOURCES
+	src/glpg/shader_program.cpp
 	src/glpg/template_app/template_app.cpp
 	src/glpg/hello_triangle/hello_triangle.cpp
 	src/glpg/shader_intro/shader_intro.cpp

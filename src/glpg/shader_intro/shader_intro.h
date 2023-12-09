@@ -4,10 +4,14 @@
 // include glfw after glad
 #include <GLFW/glfw3.h>
 
+#include <memory>
+
+#include "glpg/shader_program.h"
+
 namespace glpg::shader_intro {
 
 struct State {
-	GLuint program = 0;
+	std::unique_ptr<ShaderProgram> shader_program;
 	GLuint vertex_array = 0;
 };
 

@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "shader_intro.h"
+#include "glpg/shader_program.h"
 
 using namespace glpg;
 
@@ -55,9 +56,16 @@ void shader_intro::process(GLFWwindow* window, State& state) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
 	}
+
+	if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS) {
+		state.shader_program->recreate();
+	}
 }
 
 void shader_intro::initialize(GLFWwindow* window, State& state) {
+	state.shader_program = std::make_unique<ShaderProgram>(
+		"shaders/shader_intro/basic.vert", "shaders/shader_intro/basic.frag");
+
 	static const GLfloat vertices[] = {
 		// positions        	// colors
 		 0.0f,   0.5f, 0.0f,	1.0f, 1.0f, 0.0f, // top center
@@ -67,40 +75,6 @@ void shader_intro::initialize(GLFWwindow* window, State& state) {
 	static const GLuint indices[] = {
 		0, 1, 2,
 	};
-
-	std::string vert_s;
-	auto file_path = "shaders/shader_intro/basic.vert";
-	std::ifstream ifs (file_path, std::ifstream::in);
-	if (ifs) {
-		std::stringstream string_stream;
-		string_stream << ifs.rdbuf();
-		vert_s = string_stream.str();
-		ifs.close();
-	}
-	else {
-		std::cerr << "\033[1;31m";
-		std::cerr << "Can't read file " << file_path << std::endl;
-		std::cerr << "\033[1;0m";
-		return;
-	}
-	static const GLchar* vertex_shader_source = vert_s.c_str();
-
-	std::string frag_s;
-	file_path = "shaders/shader_intro/basic.frag";
-	ifs = std::ifstream(file_path, std::ifstream::in);
-	if (ifs) {
-		std::stringstream string_stream;
-		string_stream << ifs.rdbuf();
-		frag_s = string_stream.str();
-		ifs.close();
-	}
-	else {
-		std::cerr << "\033[1;31m";
-		std::cerr << "error rading file \"" << file_path << '\"' << std::endl;
-		std::cerr << "\033[1;0m";
-		return;
-	}
-	static const GLchar* fragment_shader_source = frag_s.c_str();
 
 	static const GLint position_attrib_index = 0; // layout (location = 0)
 	static const GLint color_attrib_index = 1; // layout (location = 1)
@@ -130,45 +104,6 @@ void shader_intro::initialize(GLFWwindow* window, State& state) {
 	glVertexAttribPointer(color_attrib_index, 3, GL_FLOAT, false, vertex_stride, (GLvoid*)(3*sizeof(GLfloat)));
 	glEnableVertexAttribArray(color_attrib_index);
 
-	GLuint vertex_shader;
-	vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
-	glCompileShader(vertex_shader);
-	glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &success);
-	if (!success) {
-		glGetShaderInfoLog(vertex_shader, 1024, NULL, message);
-		std::cerr << "\033[1;31m";
-		std::cerr << "vertex shader compilation failed\n" << message << std::endl;
-		std::cerr << "\033[1;0m";
-	}
-
-	GLuint fragment_shader;
-	fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragment_shader, 1, &fragment_shader_source, NULL);
-	glCompileShader(fragment_shader);
-	glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &success);
-	if (!success) {
-		glGetShaderInfoLog(fragment_shader, 1024, NULL, message);
-		std::cerr << "\033[1;31m";
-		std::cerr << "fragment shader compilation failed\n" << message << std::endl;
-		std::cerr << "\033[1;0m";
-	}
-
-	state.program = glCreateProgram();
-	glAttachShader(state.program, vertex_shader);
-	glAttachShader(state.program, fragment_shader);
-	glLinkProgram(state.program);
-	glGetProgramiv(state.program, GL_LINK_STATUS, &success);
-	if (!success) {
-		glGetProgramInfoLog(state.program, 1024, NULL, message);
-		std::cerr << "\033[1;31m";
-		std::cerr << "program linkage failed\n" << message << std::endl;
-		std::cerr << "\033[1;0m";
-	}
-
-	glDeleteShader(vertex_shader);
-	glDeleteShader(fragment_shader);
-
 	// unbind buffers to avoid accidental modification
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -181,12 +116,11 @@ void shader_intro::render(GLFWwindow* window, State& state) {
 
 	float time_value = glfwGetTime();
 	GLfloat intensity = (sin(time_value) / 2.0f) + 0.5f;
-	auto intensity_location = glGetUniformLocation(state.program, "intensity");
 
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe mode
 
-	glUseProgram(state.program);
-	glUniform1f(intensity_location, intensity);
+	state.shader_program->use();
+	state.shader_program->set_uniform_float("intensity", intensity);
 	glBindVertexArray(state.vertex_array);
 	static const GLsizei num_vertices = 3;
 	glDrawElements(GL_TRIANGLES, num_vertices, GL_UNSIGNED_INT, NULL);
