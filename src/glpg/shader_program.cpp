@@ -24,11 +24,6 @@ void ShaderProgram::use() const { glUseProgram(m_id); }
 
 bool ShaderProgram::good() const { return m_good; }
 
-void ShaderProgram::set_uniform_float(const GLchar * name, const GLfloat value) {
-	auto location = glGetUniformLocation(m_id, name);
-	glUniform1f(location, value);
-}
-
 void ShaderProgram::create() {
 	m_good = true;
 

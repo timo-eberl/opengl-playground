@@ -5,6 +5,7 @@
 
 #include "shader_intro.h"
 #include "glpg/shader_program.h"
+#include "glpg/uniforms.h"
 
 using namespace glpg;
 
@@ -66,6 +67,8 @@ void shader_intro::initialize(GLFWwindow* window, State& state) {
 	state.shader_program = std::make_unique<ShaderProgram>(
 		"shaders/shader_intro/basic.vert", "shaders/shader_intro/basic.frag");
 
+	state.uniforms.set_float3("min_color", { 0.2f, 0.2f, 0.2f });
+
 	static const GLfloat vertices[] = {
 		// positions        	// colors
 		 0.0f,   0.5f, 0.0f,	1.0f, 1.0f, 0.0f, // top center
@@ -119,8 +122,10 @@ void shader_intro::render(GLFWwindow* window, State& state) {
 
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe mode
 
+	state.uniforms.set_float1("intensity", intensity);
+
 	state.shader_program->use();
-	state.shader_program->set_uniform_float("intensity", intensity);
+	state.uniforms.apply_to_program(*state.shader_program);
 	glBindVertexArray(state.vertex_array);
 	static const GLsizei num_vertices = 3;
 	glDrawElements(GL_TRIANGLES, num_vertices, GL_UNSIGNED_INT, NULL);

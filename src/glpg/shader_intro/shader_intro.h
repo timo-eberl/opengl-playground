@@ -7,10 +7,12 @@
 #include <memory>
 
 #include "glpg/shader_program.h"
+#include "glpg/uniforms.h"
 
 namespace glpg::shader_intro {
 
 struct State {
+	Uniforms uniforms;
 	std::unique_ptr<ShaderProgram> shader_program;
 	GLuint vertex_array = 0;
 };
