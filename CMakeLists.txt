@@ -11,6 +11,8 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(glfw)
 # glad
 add_subdirectory(glad)
+# stb_image
+add_subdirectory(stb_image)
 
 # our project
 add_compile_definitions(_ASSETS_DIR=\"${PROJECT_SOURCE_DIR}/\")
@@ -29,3 +31,4 @@ target_include_directories(${PROJECT_NAME} PRIVATE src)
 # statically link dependencies
 target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
 target_link_libraries(${PROJECT_NAME} PRIVATE glad)
+target_link_libraries(${PROJECT_NAME} PRIVATE stb_image)
