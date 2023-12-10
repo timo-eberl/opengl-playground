@@ -4,6 +4,5 @@
 #include "glpg/textures_app/textures_app.h"
 
 int main() {
-	glpg::textures_app::run();
-	return 0;
+	return glpg::textures_app::run();
 }
