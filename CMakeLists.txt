@@ -22,6 +22,7 @@ set(SOURCES
 	src/glpg/template_app/template_app.cpp
 	src/glpg/hello_triangle/hello_triangle.cpp
 	src/glpg/shader_intro/shader_intro.cpp
+	src/glpg/textures_app/textures_app.cpp
 )
 add_executable(${PROJECT_NAME}
 	src/main.cpp
