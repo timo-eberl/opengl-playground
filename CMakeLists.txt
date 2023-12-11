@@ -13,6 +13,8 @@ add_subdirectory(glfw)
 add_subdirectory(glad)
 # stb_image
 add_subdirectory(stb_image)
+# OpenGL Mathematics (GLM)
+add_subdirectory(glm)
 
 # our project
 add_compile_definitions(_ASSETS_DIR=\"${PROJECT_SOURCE_DIR}/assets/\")
@@ -33,3 +35,4 @@ target_include_directories(${PROJECT_NAME} PRIVATE src)
 target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
 target_link_libraries(${PROJECT_NAME} PRIVATE glad)
 target_link_libraries(${PROJECT_NAME} PRIVATE stb_image)
+target_link_libraries(${PROJECT_NAME} PRIVATE glm)
