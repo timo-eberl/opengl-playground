@@ -24,6 +24,8 @@ void ShaderProgram::use() const { glUseProgram(m_id); }
 
 bool ShaderProgram::good() const { return m_good; }
 
+GLuint ShaderProgram::get_id() const { return m_id; }
+
 void ShaderProgram::create() {
 	m_good = true;
 

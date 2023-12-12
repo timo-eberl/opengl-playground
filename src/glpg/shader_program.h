@@ -8,10 +8,7 @@
 
 namespace glpg {
 
-class Uniforms;
-
 class ShaderProgram {
-	friend Uniforms;
 public:
 	ShaderProgram(
 		const std::string& vertex_shader_path, const std::string& fragment_shader_path
@@ -19,6 +16,7 @@ public:
 	void recreate(); // reloads from disk, recompiles and relinks
 	bool good() const; // true if creation was successful
 	void use() const; // calls glUseProgram
+	GLuint get_id() const;
 
 private:
 	GLuint m_id;
