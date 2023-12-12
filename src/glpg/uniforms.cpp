@@ -1,5 +1,7 @@
 #include "uniforms.h"
 
+#include <glm/gtc/type_ptr.hpp>
+
 using glpg::Uniforms;
 
 void Uniforms::apply_to_program(const ShaderProgram& program) const {
@@ -53,6 +55,44 @@ void Uniforms::apply_to_program(const ShaderProgram& program) const {
 		auto location = glGetUniformLocation(program.get_id(), key.c_str());
 		glUniform4ui(location, value[0], value[1], value[2], value[3]);
 	}
+
+	for (const auto& [key, value] : m_mat2) {
+		auto location = glGetUniformLocation(program.get_id(), key.c_str());
+		glUniformMatrix2fv(location, 1, false, glm::value_ptr(value));
+	}
+	for (const auto& [key, value] : m_mat3) {
+		auto location = glGetUniformLocation(program.get_id(), key.c_str());
+		glUniformMatrix3fv(location, 1, false, glm::value_ptr(value));
+	}
+	for (const auto& [key, value] : m_mat4) {
+		auto location = glGetUniformLocation(program.get_id(), key.c_str());
+		glUniformMatrix4fv(location, 1, false, glm::value_ptr(value));
+	}
+
+	for (const auto& [key, value] : m_mat2x3) {
+		auto location = glGetUniformLocation(program.get_id(), key.c_str());
+		glUniformMatrix2x3fv(location, 1, false, glm::value_ptr(value));
+	}
+	for (const auto& [key, value] : m_mat3x2) {
+		auto location = glGetUniformLocation(program.get_id(), key.c_str());
+		glUniformMatrix3x2fv(location, 1, false, glm::value_ptr(value));
+	}
+	for (const auto& [key, value] : m_mat2x4) {
+		auto location = glGetUniformLocation(program.get_id(), key.c_str());
+		glUniformMatrix2x4fv(location, 1, false, glm::value_ptr(value));
+	}
+	for (const auto& [key, value] : m_mat4x2) {
+		auto location = glGetUniformLocation(program.get_id(), key.c_str());
+		glUniformMatrix4x2fv(location, 1, false, glm::value_ptr(value));
+	}
+	for (const auto& [key, value] : m_mat3x4) {
+		auto location = glGetUniformLocation(program.get_id(), key.c_str());
+		glUniformMatrix3x4fv(location, 1, false, glm::value_ptr(value));
+	}
+	for (const auto& [key, value] : m_mat4x3) {
+		auto location = glGetUniformLocation(program.get_id(), key.c_str());
+		glUniformMatrix4x3fv(location, 1, false, glm::value_ptr(value));
+	}
 }
 
 void Uniforms::set_float1(const std::string name, const GLfloat v) {
@@ -78,3 +118,14 @@ void Uniforms::set_uint1(const std::string name, const glm::uvec1 v) { m_uint1[n
 void Uniforms::set_uint2(const std::string name, const glm::uvec2 v) { m_uint2[name] = v; }
 void Uniforms::set_uint3(const std::string name, const glm::uvec3 v) { m_uint3[name] = v; }
 void Uniforms::set_uint4(const std::string name, const glm::uvec4 v) { m_uint4[name] = v; }
+
+void Uniforms::set_mat2(const std::string name, const glm::mat2 v) { m_mat2[name] = v; }
+void Uniforms::set_mat3(const std::string name, const glm::mat3 v) { m_mat3[name] = v; }
+void Uniforms::set_mat4(const std::string name, const glm::mat4 v) { m_mat4[name] = v; }
+
+void Uniforms::set_mat2x3(const std::string name, const glm::mat2x3 v) { m_mat2x3[name] = v; }
+void Uniforms::set_mat3x2(const std::string name, const glm::mat3x2 v) { m_mat3x2[name] = v; }
+void Uniforms::set_mat2x4(const std::string name, const glm::mat2x4 v) { m_mat2x4[name] = v; }
+void Uniforms::set_mat4x2(const std::string name, const glm::mat4x2 v) { m_mat4x2[name] = v; }
+void Uniforms::set_mat3x4(const std::string name, const glm::mat3x4 v) { m_mat3x4[name] = v; }
+void Uniforms::set_mat4x3(const std::string name, const glm::mat4x3 v) { m_mat4x3[name] = v; }

@@ -4,6 +4,8 @@
 #include <cmath>
 
 #include <stb_image.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "textures_app.h"
 #include "glpg/shader_program.h"
@@ -174,11 +176,15 @@ void textures_app::render(GLFWwindow* window, State& state) {
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	float time_value = glfwGetTime();
-	GLfloat intensity = (sin(time_value) / 2.0f) + 0.5f;
+
+	glm::mat4 transform = glm::mat4(1.0f);
+	transform = glm::translate(transform, glm::vec3(0.25f, -0.25f, 0.0f));
+	transform = glm::rotate(transform, glm::radians(45.0f) * time_value, glm::vec3(0.0, 0.0, 1.0));
+	transform = glm::scale(transform, glm::vec3(sin(time_value)));
 
 	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // wireframe mode
 
-	state.uniforms.set_float1("intensity", intensity);
+	state.uniforms.set_mat4("transform", transform);
 
 	state.shader_program->use();
 	state.uniforms.apply_to_program(*state.shader_program);

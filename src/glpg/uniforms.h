@@ -37,6 +37,17 @@ public:
 	void set_uint3(const std::string name, const glm::uvec3 v);
 	void set_uint4(const std::string name, const glm::uvec4 v);
 
+	void set_mat2(const std::string name, const glm::mat2 v);
+	void set_mat3(const std::string name, const glm::mat3 v);
+	void set_mat4(const std::string name, const glm::mat4 v);
+
+	void set_mat2x3(const std::string name, const glm::mat2x3 v);
+	void set_mat3x2(const std::string name, const glm::mat3x2 v);
+	void set_mat2x4(const std::string name, const glm::mat2x4 v);
+	void set_mat4x2(const std::string name, const glm::mat4x2 v);
+	void set_mat3x4(const std::string name, const glm::mat3x4 v);
+	void set_mat4x3(const std::string name, const glm::mat4x3 v);
+
 private:
 	std::map<const std::string, glm::vec1> m_float1;
 	std::map<const std::string, glm::vec2> m_float2;
@@ -52,6 +63,17 @@ private:
 	std::map<const std::string, glm::uvec2> m_uint2;
 	std::map<const std::string, glm::uvec3> m_uint3;
 	std::map<const std::string, glm::uvec4> m_uint4;
+
+	std::map<const std::string, glm::mat2> m_mat2;
+	std::map<const std::string, glm::mat3> m_mat3;
+	std::map<const std::string, glm::mat4> m_mat4;
+
+	std::map<const std::string, glm::mat2x3> m_mat2x3;
+	std::map<const std::string, glm::mat3x2> m_mat3x2;
+	std::map<const std::string, glm::mat2x4> m_mat2x4;
+	std::map<const std::string, glm::mat4x2> m_mat4x2;
+	std::map<const std::string, glm::mat3x4> m_mat3x4;
+	std::map<const std::string, glm::mat4x3> m_mat4x3;
 };
 
 } // glpg
