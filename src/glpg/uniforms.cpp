@@ -5,6 +5,16 @@
 using glpg::Uniforms;
 
 void Uniforms::apply_to_program(const ShaderProgram& program) const {
+	uint texture_unit_offset = 0;
+	for (const auto& [key, value] : m_textures) {
+		if (auto sp_tex = value.lock()) {
+			auto location = glGetUniformLocation(program.get_id(), key.c_str());
+			glUniform1i(location, texture_unit_offset);
+			glActiveTexture(GL_TEXTURE0 + texture_unit_offset);
+			glBindTexture(GL_TEXTURE_2D, sp_tex->get_id());
+			texture_unit_offset++;
+		}
+	}
 	for (const auto& [key, value] : m_float1) {
 		auto location = glGetUniformLocation(program.get_id(), key.c_str());
 		glUniform1f(location, value[0]);
@@ -95,6 +105,9 @@ void Uniforms::apply_to_program(const ShaderProgram& program) const {
 	}
 }
 
+void Uniforms::set_texture(const std::string name, const std::weak_ptr<glpg::Texture> t) {
+	m_textures[name] = t;
+}
 void Uniforms::set_float1(const std::string name, const GLfloat v) {
 	set_float1(name, glm::vec1(v));
 }

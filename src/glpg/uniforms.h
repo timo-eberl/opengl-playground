@@ -7,9 +7,11 @@
 #include <glm/glm.hpp>
 
 #include "shader_program.h"
+#include "texture.h"
 
 #include <map>
 #include <array>
+#include <memory>
 #include <string>
 
 namespace glpg {
@@ -18,6 +20,8 @@ class Uniforms {
 public:
 	// ShaderProgram::use() must be called first!
 	void apply_to_program(const ShaderProgram& program) const;
+
+	void set_texture(const std::string name, const std::weak_ptr<glpg::Texture> t);
 
 	void set_float1(const std::string name, const GLfloat v);
 	void set_float1(const std::string name, const glm::vec1 v);
@@ -49,6 +53,8 @@ public:
 	void set_mat4x3(const std::string name, const glm::mat4x3 v);
 
 private:
+	std::map<const std::string, std::weak_ptr<glpg::Texture>> m_textures;
+
 	std::map<const std::string, glm::vec1> m_float1;
 	std::map<const std::string, glm::vec2> m_float2;
 	std::map<const std::string, glm::vec3> m_float3;

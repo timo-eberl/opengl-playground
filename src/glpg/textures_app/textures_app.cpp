@@ -66,6 +66,8 @@ void textures_app::process(GLFWwindow* window, State& state) {
 
 	if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS) {
 		state.shader_program->recreate();
+		state.tex0->reload();
+		state.tex1->reload();
 	}
 }
 
@@ -73,7 +75,11 @@ void textures_app::initialize(GLFWwindow* window, State& state) {
 	state.shader_program = std::make_unique<ShaderProgram>(
 		"shaders/textures_app/shader.vert", "shaders/textures_app/shader.frag");
 
-	state.uniforms.set_float3("min_color", { 0.2f, 0.2f, 0.2f });
+	state.tex0 = std::make_shared<glpg::Texture>("textures/container.jpg", GL_RGB);
+	state.uniforms.set_texture("tex0", state.tex0);
+
+	state.tex1 = std::make_shared<glpg::Texture>("textures/awesomeface.png", GL_RGBA);
+	state.uniforms.set_texture("tex1", state.tex1);
 
 	static const GLfloat vertices[] = {
 		// positions        	// uv
@@ -87,10 +93,6 @@ void textures_app::initialize(GLFWwindow* window, State& state) {
 
 	static const GLint position_attrib_index = 0; // layout (location = 0)
 	static const GLint uv_attrib_index = 1; // layout (location = 1)
-
-	// used to receive error messages later on
-	GLint success;
-	GLchar message[1024];
 
 	// any subsequent vertex attribute calls and bind buffer calls
 	// will be stored inside the vertex array
@@ -112,57 +114,6 @@ void textures_app::initialize(GLFWwindow* window, State& state) {
 	glEnableVertexAttribArray(position_attrib_index);
 	glVertexAttribPointer(uv_attrib_index, 2, GL_FLOAT, false, vertex_stride, (GLvoid*)(3*sizeof(GLfloat)));
 	glEnableVertexAttribArray(uv_attrib_index);
-
-	stbi_set_flip_vertically_on_load(true);
-
-	int tex_width, tex_height, tex_n_channels;
-	std::string path = ASSETS_DIR; path += "textures/container.jpg";
-	unsigned char* texture_data = stbi_load(path.c_str(), &tex_width, &tex_height, &tex_n_channels, 0);
-	if (!texture_data) {
-		std::cerr << "\033[1;31m"; // font color red
-		std::cerr << "Failed to load texture \"" << path << "\"\n\n";
-		std::cerr << "\033[1;0m"; // reset styling
-	}
-	else {
-		glGenTextures(1, &state.texture_0_id);
-		glActiveTexture(GL_TEXTURE0); // texture unit
-		glBindTexture(GL_TEXTURE_2D, state.texture_0_id);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // wrap texture around x
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); // wrap texture around y
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexImage2D(
-			GL_TEXTURE_2D, 0, GL_RGB, tex_width, tex_height, 0, GL_RGB, GL_UNSIGNED_BYTE,
-			texture_data
-		);
-		glGenerateMipmap(GL_TEXTURE_2D);
-		state.uniforms.set_int1("tex0", 0);
-	}
-	stbi_image_free(texture_data);
-
-	path = ASSETS_DIR; path += "textures/awesomeface.png";
-	texture_data = stbi_load(path.c_str(), &tex_width, &tex_height, &tex_n_channels, 0);
-	if (!texture_data) {
-		std::cerr << "\033[1;31m"; // font color red
-		std::cerr << "Failed to load texture \"" << path << "\"\n\n";
-		std::cerr << "\033[1;0m"; // reset styling
-	}
-	else {
-		glGenTextures(1, &state.texture_1_id);
-		glActiveTexture(GL_TEXTURE1); // texture unit
-		glBindTexture(GL_TEXTURE_2D, state.texture_1_id);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // wrap texture around x
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); // wrap texture around y
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexImage2D(
-			GL_TEXTURE_2D, 0, GL_RGBA, tex_width, tex_height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
-			texture_data
-		);
-		glGenerateMipmap(GL_TEXTURE_2D);
-		state.uniforms.set_int1("tex1", 1);
-	}
-	stbi_image_free(texture_data);
 
 	// unbind buffers to avoid accidental modification
 	glBindVertexArray(0);
@@ -188,10 +139,6 @@ void textures_app::render(GLFWwindow* window, State& state) {
 
 	state.shader_program->use();
 	state.uniforms.apply_to_program(*state.shader_program);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, state.texture_0_id);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, state.texture_1_id);
 	glBindVertexArray(state.vertex_array);
 	static const GLsizei num_vertices = 3;
 	glDrawElements(GL_TRIANGLES, num_vertices, GL_UNSIGNED_INT, NULL);

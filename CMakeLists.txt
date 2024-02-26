@@ -21,6 +21,7 @@ add_compile_definitions(_ASSETS_DIR=\"${PROJECT_SOURCE_DIR}/assets/\")
 set(SOURCES
 	src/glpg/shader_program.cpp
 	src/glpg/uniforms.cpp
+	src/glpg/texture.cpp
 	src/glpg/template_app/template_app.cpp
 	src/glpg/hello_triangle/hello_triangle.cpp
 	src/glpg/shader_intro/shader_intro.cpp

@@ -15,8 +15,8 @@ struct State {
 	Uniforms uniforms;
 	std::unique_ptr<ShaderProgram> shader_program;
 	GLuint vertex_array = 0;
-	GLuint texture_0_id = 0;
-	GLuint texture_1_id = 0;
+	std::shared_ptr<glpg::Texture> tex0;
+	std::shared_ptr<glpg::Texture> tex1;
 };
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
