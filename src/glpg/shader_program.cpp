@@ -75,8 +75,9 @@ void ShaderProgram::create() {
 
 	if (m_good) {
 		std::cout << "\033[1;32m"; // font color green
-		std::cout << "Shader program created" << std::endl;
+		std::cout << "Shader program created";
 		std::cout << "\033[1;0m"; // reset styling
+		std::cout << std::endl;
 	}
 }
 
