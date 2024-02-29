@@ -36,6 +36,7 @@ int coordinate_sytems_app::run() {
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	State state {};
+	glfwSetWindowUserPointer(window, static_cast<void *>(&state));
 	initialize(window, state);
 
 	auto last_frame_time_point = std::chrono::high_resolution_clock::now();
@@ -148,12 +149,35 @@ void coordinate_sytems_app::initialize(GLFWwindow* window, State& state) {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	glEnable(GL_DEPTH_TEST);
+
+	state.camera = std::make_shared<PerspectiveCamera>(45.0f, 800.0f/600.0f, 0.1f, 100.0f);
+	glm::mat4 cam_model_matrix = glm::translate(glm::identity<glm::mat4>(), glm::vec3(0.0f, 5.0f, 7.0f));
+	cam_model_matrix = glm::rotate(cam_model_matrix, glm::radians(-25.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	state.camera->set_model_matrix(cam_model_matrix);
+
+	state.camera_controls = std::make_unique<CameraOrbitControls>(state.camera);
+
+	glfwSetScrollCallback(window, scroll_callback);
+}
+
+void coordinate_sytems_app::scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+	auto state = static_cast<State *>(glfwGetWindowUserPointer(window));
+
+	if (state) {
+		if (yoffset == 1.0) {
+			state->camera_controls->scroll_callback(CameraOrbitControls::UP);
+		}
+		else if (yoffset == -1.0) {
+			state->camera_controls->scroll_callback(CameraOrbitControls::DOWN);
+		}
+	}
 }
 
 void coordinate_sytems_app::process(GLFWwindow* window, State& state) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
 	}
+	state.camera_controls->update(*window);
 }
 
 void coordinate_sytems_app::render(GLFWwindow* window, State& state) {
@@ -173,13 +197,8 @@ void coordinate_sytems_app::render(GLFWwindow* window, State& state) {
 		glm::vec3(-1.3f,  1.0f, -1.5f)
 	};
 
-	// move camera along z (the same as moving the scene along -z)
-	const glm::mat4 view = glm::translate(glm::identity<glm::mat4>(), glm::vec3(0.0f, 0.0f, -3.0f));
-	state.uniforms.set_mat4("view", view);
-
-	const auto aspect_ratio = 800.0f / 600.0f;
-	const glm::mat4 projection = glm::perspective(glm::radians(45.0f), aspect_ratio, 0.1f, 100.0f);
-	state.uniforms.set_mat4("projection", projection);
+	state.uniforms.set_mat4("view_matrix", glm::inverse(state.camera->get_model_matrix()));
+	state.uniforms.set_mat4("projection_matrix", state.camera->get_projection_matrix());
 
 	state.shader_program->use();
 	glBindVertexArray(state.vertex_array);
@@ -190,7 +209,8 @@ void coordinate_sytems_app::render(GLFWwindow* window, State& state) {
 		model = glm::rotate(
 			model, (float)glfwGetTime() * glm::radians(50.0f * (i%3+1)), glm::vec3(0.5f, (i+3)/10.0f, 0.0f)
 		);
-		state.uniforms.set_mat4("model", model);
+		model = glm::scale(model, glm::vec3(0.5, 1.0, 1.5));
+		state.uniforms.set_mat4("model_matrix", model);
 	
 		state.uniforms.apply_to_program(*state.shader_program);
 		glDrawElements(GL_TRIANGLES, num_vertices, GL_UNSIGNED_INT, NULL);
