@@ -21,36 +21,36 @@ public:
 	// ShaderProgram::use() must be called first!
 	void apply_to_program(const ShaderProgram& program) const;
 
-	void set_texture(const std::string name, const std::weak_ptr<glpg::Texture> t);
+	void set_texture(const std::string& name, const std::weak_ptr<glpg::Texture> t);
 
-	void set_float1(const std::string name, const GLfloat v);
-	void set_float1(const std::string name, const glm::vec1 v);
-	void set_float2(const std::string name, const glm::vec2);
-	void set_float3(const std::string name, const glm::vec3);
-	void set_float4(const std::string name, const glm::vec4);
+	void set_float1(const std::string& name, const GLfloat v);
+	void set_float1(const std::string& name, const glm::vec1 v);
+	void set_float2(const std::string& name, const glm::vec2);
+	void set_float3(const std::string& name, const glm::vec3);
+	void set_float4(const std::string& name, const glm::vec4);
 
-	void set_int1(const std::string name, const GLint v);
-	void set_int1(const std::string name, const glm::ivec1 v);
-	void set_int2(const std::string name, const glm::ivec2 v);
-	void set_int3(const std::string name, const glm::ivec3 v);
-	void set_int4(const std::string name, const glm::ivec4 v);
+	void set_int1(const std::string& name, const GLint v);
+	void set_int1(const std::string& name, const glm::ivec1 v);
+	void set_int2(const std::string& name, const glm::ivec2 v);
+	void set_int3(const std::string& name, const glm::ivec3 v);
+	void set_int4(const std::string& name, const glm::ivec4 v);
 
-	void set_uint1(const std::string name, const GLuint v);
-	void set_uint1(const std::string name, const glm::uvec1 v);
-	void set_uint2(const std::string name, const glm::uvec2 v);
-	void set_uint3(const std::string name, const glm::uvec3 v);
-	void set_uint4(const std::string name, const glm::uvec4 v);
+	void set_uint1(const std::string& name, const GLuint v);
+	void set_uint1(const std::string& name, const glm::uvec1 v);
+	void set_uint2(const std::string& name, const glm::uvec2 v);
+	void set_uint3(const std::string& name, const glm::uvec3 v);
+	void set_uint4(const std::string& name, const glm::uvec4 v);
 
-	void set_mat2(const std::string name, const glm::mat2 v);
-	void set_mat3(const std::string name, const glm::mat3 v);
-	void set_mat4(const std::string name, const glm::mat4 v);
+	void set_mat2(const std::string& name, const glm::mat2 v);
+	void set_mat3(const std::string& name, const glm::mat3 v);
+	void set_mat4(const std::string& name, const glm::mat4 v);
 
-	void set_mat2x3(const std::string name, const glm::mat2x3 v);
-	void set_mat3x2(const std::string name, const glm::mat3x2 v);
-	void set_mat2x4(const std::string name, const glm::mat2x4 v);
-	void set_mat4x2(const std::string name, const glm::mat4x2 v);
-	void set_mat3x4(const std::string name, const glm::mat3x4 v);
-	void set_mat4x3(const std::string name, const glm::mat4x3 v);
+	void set_mat2x3(const std::string& name, const glm::mat2x3 v);
+	void set_mat3x2(const std::string& name, const glm::mat3x2 v);
+	void set_mat2x4(const std::string& name, const glm::mat2x4 v);
+	void set_mat4x2(const std::string& name, const glm::mat4x2 v);
+	void set_mat3x4(const std::string& name, const glm::mat3x4 v);
+	void set_mat4x3(const std::string& name, const glm::mat4x3 v);
 
 private:
 	std::map<const std::string, std::weak_ptr<glpg::Texture>> m_textures;
