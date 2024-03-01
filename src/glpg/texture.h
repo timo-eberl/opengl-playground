@@ -17,20 +17,31 @@ public:
 		const GLint min_filter = GL_LINEAR_MIPMAP_LINEAR,
 		const GLint max_filter = GL_LINEAR
 	);
+	~Texture();
+	// forbid copying, because it would be incredibly expensive!
+	Texture(const Texture&) = delete;
+	Texture &operator=(const Texture&) = delete;
+
+	// move semantics
+	Texture(Texture &&other);
+	Texture& operator=(Texture &&other);
+
+	bool good() const; // true if texture is valid
 	void reload();
 	GLuint get_id() const;
 
 private:
 	inline static uint s_texture_units_used = 0; // will go up with textures used
 
-	const std::string m_path;
+	std::string m_path;
 	GLuint m_id;
-	const GLint m_internal_format;
-	const GLint m_wrap_mode;
-	const GLint m_min_filter;
-	const GLint m_max_filter;
+	GLint m_internal_format;
+	GLint m_wrap_mode;
+	GLint m_min_filter;
+	GLint m_max_filter;
 
 	void load();
+	void release();
 };
 
 } // glpg

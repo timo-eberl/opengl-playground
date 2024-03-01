@@ -19,10 +19,10 @@ public:
 	GLuint get_id() const;
 
 private:
-	GLuint m_id;
-	bool m_good;
 	const std::string m_vertex_shader_path;
 	const std::string m_fragment_shader_path;
+	GLuint m_id;
+	bool m_good;
 
 	void create();
 	std::string read_file(const std::string& path);

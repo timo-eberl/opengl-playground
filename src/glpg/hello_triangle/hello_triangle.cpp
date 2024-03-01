@@ -28,16 +28,18 @@ int hello_triangle::run() {
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-	State state {};
-	initialize(window, state);
+	{ // this scope ensures that "state" is destroyed before the opengl context is destroyed (glfwTerminate)
+		State state {};
+		initialize(window, state);
 
-	while (!glfwWindowShouldClose(window)) {
-		process(window, state);
+		while (!glfwWindowShouldClose(window)) {
+			process(window, state);
 
-		render(window, state);
+			render(window, state);
 
-		glfwSwapBuffers(window);
-		glfwPollEvents();
+			glfwSwapBuffers(window);
+			glfwPollEvents();
+		}
 	}
 
 	glfwTerminate();

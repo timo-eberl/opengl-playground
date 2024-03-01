@@ -8,6 +8,9 @@ void Uniforms::apply_to_program(const ShaderProgram& program) const {
 	uint texture_unit_offset = 0;
 	for (const auto& [key, value] : m_textures) {
 		if (auto sp_tex = value.lock()) {
+			if (!sp_tex->good()) {
+				continue;
+			}
 			auto location = glGetUniformLocation(program.get_id(), key.c_str());
 			glUniform1i(location, texture_unit_offset);
 			glActiveTexture(GL_TEXTURE0 + texture_unit_offset);

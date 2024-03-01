@@ -23,6 +23,36 @@ Texture::Texture(
 	load();
 }
 
+Texture::~Texture() { release(); }
+
+Texture::Texture(Texture &&other)
+	: m_path(other.m_path), m_id(other.m_id), m_internal_format(other.m_internal_format),
+	m_wrap_mode(other.m_wrap_mode), m_min_filter(other.m_min_filter), m_max_filter(other.m_max_filter)
+{}
+
+Texture& Texture::operator=(Texture &&other) {
+	if (this == &other) return *this;
+
+	release();
+	m_path = other.m_path; m_id = other.m_id; m_internal_format = other.m_internal_format;
+	m_wrap_mode = other.m_wrap_mode; m_min_filter = other.m_min_filter; m_max_filter = other.m_max_filter;
+
+	return *this;
+}
+
+bool Texture::good() const { return m_id != 0; }
+
+void Texture::reload() { release(); load(); }
+
+void Texture::release() {
+	if (m_id) {
+		glDeleteTextures(1, &m_id);
+		m_id = 0;
+	}
+}
+
+GLuint Texture::get_id() const { return m_id; }
+
 void Texture::load() {
 	stbi_set_flip_vertically_on_load(true);
 	int tex_width, tex_height, tex_n_channels;
@@ -32,6 +62,7 @@ void Texture::load() {
 		std::cerr << "\033[1;31m"; // font color red
 		std::cerr << "Failed to load texture \"" << path << "\"\n\n";
 		std::cerr << "\033[1;0m"; // reset styling
+		m_id = 0;
 	}
 	else {
 		glGenTextures(1, &m_id);
@@ -53,7 +84,3 @@ void Texture::load() {
 	}
 	stbi_image_free(texture_data);
 }
-
-void Texture::reload() { load(); }
-
-GLuint Texture::get_id() const { return m_id; }

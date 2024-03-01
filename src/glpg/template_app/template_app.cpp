@@ -30,26 +30,28 @@ int template_app::run() {
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-	State state {};
-	initialize(window, state);
+	{ // this scope ensures that "state" is destroyed before the opengl context is destroyed (glfwTerminate)
+		State state {};
+		initialize(window, state);
 
-	auto last_frame_time_point = std::chrono::high_resolution_clock::now();
+		auto last_frame_time_point = std::chrono::high_resolution_clock::now();
 
-	while (!glfwWindowShouldClose(window)) {
-		process(window, state);
+		while (!glfwWindowShouldClose(window)) {
+			process(window, state);
 
-		render(window, state);
+			render(window, state);
 
-		// profiling
-		auto now = std::chrono::high_resolution_clock::now();
-		auto delta = now - last_frame_time_point;
-		last_frame_time_point = now;
-		auto fps = 1.0 / (delta.count() * 1.0E-9);
-		// don't forget to disable vsync!
-		// std::cout << "fps: " << fps << ", delta: " << delta << std::endl;
+			// profiling
+			auto now = std::chrono::high_resolution_clock::now();
+			auto delta = now - last_frame_time_point;
+			last_frame_time_point = now;
+			auto fps = 1.0 / (delta.count() * 1.0E-9);
+			// don't forget to disable vsync!
+			// std::cout << "fps: " << fps << ", delta: " << delta << std::endl;
 
-		glfwSwapBuffers(window);
-		glfwPollEvents();
+			glfwSwapBuffers(window);
+			glfwPollEvents();
+		}
 	}
 
 	glfwTerminate();
