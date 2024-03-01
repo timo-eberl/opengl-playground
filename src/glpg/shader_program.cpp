@@ -18,13 +18,21 @@ ShaderProgram::ShaderProgram(
 	create();
 }
 
-void ShaderProgram::recreate() { create(); }
+ShaderProgram::~ShaderProgram() { release(); }
+
+void ShaderProgram::recreate() { release(); create(); }
 
 void ShaderProgram::use() const { glUseProgram(m_id); }
 
 bool ShaderProgram::good() const { return m_good; }
 
 GLuint ShaderProgram::get_id() const { return m_id; }
+
+void ShaderProgram::release() {
+	glDeleteProgram(m_id);
+	m_id = 0;
+	m_good = false;
+}
 
 void ShaderProgram::create() {
 	m_good = true;
@@ -57,9 +65,13 @@ void ShaderProgram::create() {
 	glAttachShader(m_id, vertex_shader);
 	glAttachShader(m_id, fragment_shader);
 	glLinkProgram(m_id);
+	glDeleteShader(vertex_shader);
+	glDeleteShader(fragment_shader);
+
 	GLint success;
 	glGetProgramiv(m_id, GL_LINK_STATUS, &success);
 	if (!success) {
+		release();
 		m_good = false;
 
 		const uint message_size = 1024;
@@ -69,9 +81,6 @@ void ShaderProgram::create() {
 		std::cerr << "Linking program failed\n" << message << std::endl;
 		std::cerr << "\033[1;0m"; // reset styling
 	}
-
-	glDeleteShader(vertex_shader);
-	glDeleteShader(fragment_shader);
 
 	if (m_good) {
 		std::cout << "\033[1;32m"; // font color green
