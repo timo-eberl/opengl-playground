@@ -15,6 +15,8 @@ add_subdirectory(glad)
 add_subdirectory(stb_image)
 # OpenGL Mathematics (GLM)
 add_subdirectory(glm)
+# cgltf - gltf loader
+add_subdirectory(cgltf)
 
 # our project
 add_compile_definitions(_ASSETS_DIR=\"${PROJECT_SOURCE_DIR}/assets/\")
@@ -24,6 +26,7 @@ set(SOURCES
 	src/glpg/texture.cpp
 	src/glpg/perspective_camera.cpp
 	src/glpg/camera_orbit_controls.cpp
+	src/glpg/gltf_loader.cpp
 	src/glpg/template_app/template_app.cpp
 	src/glpg/hello_triangle/hello_triangle.cpp
 	src/glpg/shader_intro/shader_intro.cpp
@@ -40,3 +43,4 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
 target_link_libraries(${PROJECT_NAME} PRIVATE glad)
 target_link_libraries(${PROJECT_NAME} PRIVATE stb_image)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm)
+target_link_libraries(${PROJECT_NAME} PRIVATE cgltf)
