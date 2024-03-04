@@ -5,6 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "glpg/shader_program.h"
+#include "glpg/gltf_importer.h"
 
 #include "coordinate_sytems_app.h"
 
@@ -72,6 +73,8 @@ void coordinate_sytems_app::initialize(GLFWwindow* window, State& state) {
 	state.shader_program = std::make_unique<ShaderProgram>(
 		"shaders/coordinate_sytems_app/shader.vert", "shaders/coordinate_sytems_app/shader.frag");
 
+	state.mesh = gltf_importer::import("models/antique_camera/antique_camera.glb");
+
 	// cube with position and uvs
 	static const GLfloat vertices[] = {
 		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -121,35 +124,6 @@ void coordinate_sytems_app::initialize(GLFWwindow* window, State& state) {
 		27, 28, 29, 30, 31, 32, 33, 34, 35
 	};
 
-	static const GLint position_attrib_index = 0; // layout (location = 0)
-	static const GLint uv_attrib_index = 1; // layout (location = 1)
-
-	// any subsequent vertex attribute calls and bind buffer calls
-	// will be stored inside the vertex array
-	glGenVertexArrays(1, &state.vertex_array);
-	glBindVertexArray(state.vertex_array);
-
-	GLuint vertex_buffer = 0;
-	glGenBuffers(1, &vertex_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	GLuint element_buffer = 0;
-	glGenBuffers(1, &element_buffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-	GLsizei vertex_stride = 5 * sizeof(GLfloat);
-	glVertexAttribPointer(position_attrib_index, 3, GL_FLOAT, false, vertex_stride, (GLvoid*)0);
-	glEnableVertexAttribArray(position_attrib_index);
-	glVertexAttribPointer(uv_attrib_index, 2, GL_FLOAT, false, vertex_stride, (GLvoid*)(3*sizeof(GLfloat)));
-	glEnableVertexAttribArray(uv_attrib_index);
-
-	// unbind buffers to avoid accidental modification
-	glBindVertexArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
 	glEnable(GL_DEPTH_TEST);
 
 	state.camera = std::make_shared<PerspectiveCamera>(45.0f, 800.0f/600.0f, 0.1f, 100.0f);
@@ -180,6 +154,10 @@ void coordinate_sytems_app::process(GLFWwindow* window, State& state) {
 		glfwSetWindowShouldClose(window, true);
 	}
 	state.camera_controls->update(*window);
+
+	if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS) {
+		state.shader_program->recreate();
+	}
 }
 
 void coordinate_sytems_app::render(GLFWwindow* window, State& state) {
@@ -203,19 +181,17 @@ void coordinate_sytems_app::render(GLFWwindow* window, State& state) {
 	state.uniforms.set_mat4("projection_matrix", state.camera->get_projection_matrix());
 
 	state.shader_program->use();
-	glBindVertexArray(state.vertex_array);
-	static const GLsizei num_vertices = 36;
-	for (size_t i = 0; i < 10; i++) {
+	for (size_t i = 0; i < 1; i++) {
 		glm::mat4 model = glm::identity<glm::mat4>();
 		model = glm::translate(model, cube_positions[i]);
-		model = glm::rotate(
-			model, (float)glfwGetTime() * glm::radians(50.0f * (i%3+1)), glm::vec3(0.5f, (i+3)/10.0f, 0.0f)
-		);
-		model = glm::scale(model, glm::vec3(0.5, 1.0, 1.5));
+		// model = glm::rotate(
+		// 	model, (float)glfwGetTime() * glm::radians(50.0f * (i%3+1)), glm::vec3(0.5f, (i+3)/10.0f, 0.0f)
+		// );
+		// model = glm::scale(model, glm::vec3(0.5, 1.0, 1.5));
 		state.uniforms.set_mat4("model_matrix", model);
 	
 		state.uniforms.apply_to_program(*state.shader_program);
-		glDrawElements(GL_TRIANGLES, num_vertices, GL_UNSIGNED_INT, NULL);
+		state.mesh.draw();
 	}
 
 	// unbind to avoid accidental modification
