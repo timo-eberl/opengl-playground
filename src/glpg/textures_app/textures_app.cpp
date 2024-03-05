@@ -139,7 +139,7 @@ void textures_app::render(GLFWwindow* window, State& state) {
 
 	state.uniforms.set_mat4("transform", transform);
 
-	state.shader_program->use();
+	glUseProgram(state.shader_program->get_id());
 	state.uniforms.apply_to_program(*state.shader_program);
 	glBindVertexArray(state.vertex_array);
 	static const GLsizei num_vertices = 3;
@@ -148,4 +148,5 @@ void textures_app::render(GLFWwindow* window, State& state) {
 	// unbind to avoid accidental modification
 	glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
+	glUseProgram(0);
 }

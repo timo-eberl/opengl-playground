@@ -11,6 +11,7 @@
 #include <glm/glm.hpp>
 
 #include "material.h"
+#include "i_drawable.h"
 #include "i_spatial.h"
 
 namespace glpg::meshes {
@@ -45,25 +46,15 @@ private:
 };
 
 struct MeshSection {
-public:
-	MeshSection(const std::shared_ptr<RenderGeometry> geometry, const std::shared_ptr<Material> material);
-
-	void send_to_gpu();
-	void draw() const;
-private:
-	const std::shared_ptr<RenderGeometry> m_geometry;
-	const std::shared_ptr<Material> m_material;
+	std::shared_ptr<RenderGeometry> geometry = {};
+	std::shared_ptr<Material> material = {};
 };
 
-class Mesh {
-public:
+struct Mesh {
 	std::vector<MeshSection> sections;
-
-	void send_to_gpu();
-	void draw() const;
 };
 
-class MeshNode : ISpatial {
+class MeshNode : IDrawable, ISpatial {
 public:
 	MeshNode();
 	MeshNode(const std::shared_ptr<Mesh> mesh);
@@ -76,6 +67,10 @@ public:
 	// ISpatial
 	virtual glm::mat4 get_model_matrix() const override;
 	virtual void set_model_matrix(glm::mat4 model_matrix) override;
+
+	// IDrawable
+	virtual void setup_drawing() override;
+	virtual void draw(Uniforms &uniforms) const override;
 private:
 	std::shared_ptr<Mesh> m_mesh;
 	glm::mat4 m_model_matrix;

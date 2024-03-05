@@ -126,12 +126,13 @@ void shader_intro::render(GLFWwindow* window, State& state) {
 
 	state.uniforms.set_float1("intensity", intensity);
 
-	state.shader_program->use();
+	glUseProgram(state.shader_program->get_id());
 	state.uniforms.apply_to_program(*state.shader_program);
 	glBindVertexArray(state.vertex_array);
 	static const GLsizei num_vertices = 3;
 	glDrawElements(GL_TRIANGLES, num_vertices, GL_UNSIGNED_INT, NULL);
 
+	glUseProgram(0);
 	// unbind vertex array to avoid accidental modification
 	glBindVertexArray(0);
 }

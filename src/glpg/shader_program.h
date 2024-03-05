@@ -20,7 +20,6 @@ public:
 
 	void recreate(); // reloads from disk, recompiles and relinks
 	bool good() const; // true if creation was successful
-	void use() const; // calls glUseProgram
 	GLuint get_id() const;
 
 private:

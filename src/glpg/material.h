@@ -1,7 +1,15 @@
 #pragma once
 
-namespace glpg::meshes {
+#include <memory>
 
-class Material {};
+#include "shader_program.h"
+#include "uniforms.h"
 
-} // glpg::meshes
+namespace glpg {
+
+struct Material {
+	Uniforms uniforms = {};
+	std::shared_ptr<ShaderProgram> shader_program = {};
+};
+
+} // glpg

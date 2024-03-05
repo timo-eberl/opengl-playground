@@ -8,21 +8,18 @@
 #include "glpg/uniforms.h"
 #include "glpg/perspective_camera.h"
 #include "glpg/camera_orbit_controls.h"
-#include "glpg/meshes.h"
+#include "glpg/scene.h"
+#include "glpg/renderer.h"
 
 namespace glpg::coordinate_sytems_app {
 
 int run();
 
 struct State {
-	Uniforms uniforms;
-	std::unique_ptr<ShaderProgram> shader_program;
-	GLuint vertex_array = 0;
 	std::shared_ptr<PerspectiveCamera> camera;
 	std::unique_ptr<CameraOrbitControls> camera_controls;
-	// int index_count = 0;
-	// bool index_format_short = false;
-	std::vector<meshes::MeshNode> mesh_nodes;
+	Scene scene;
+	Renderer renderer;
 };
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);

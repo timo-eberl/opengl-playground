@@ -26,12 +26,11 @@ set(SOURCES
 	src/glpg/texture.cpp
 	src/glpg/perspective_camera.cpp
 	src/glpg/camera_orbit_controls.cpp
-	src/glpg/gltf_importer.cpp
-	src/glpg/meshes/mesh.cpp
-	src/glpg/meshes/mesh_section.cpp
+	src/glpg/gltf.cpp
 	src/glpg/meshes/render_geometry.cpp
 	src/glpg/meshes/mesh_node.cpp
-	src/glpg/material.cpp
+	src/glpg/scene.cpp
+	src/glpg/renderer.cpp
 	src/glpg/template_app/template_app.cpp
 	src/glpg/hello_triangle/hello_triangle.cpp
 	src/glpg/shader_intro/shader_intro.cpp
