@@ -20,7 +20,7 @@ int coordinate_sytems_app::run() {
 	// tell GLFW we want to use the core-profile -> no backwards-compatible features
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow* window = glfwCreateWindow(800, 600, "OpenGL Playground", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(1300, 900, "OpenGL Playground", NULL, NULL);
 	if (window == NULL) {
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
@@ -66,7 +66,11 @@ int coordinate_sytems_app::run() {
 }
 
 void coordinate_sytems_app::framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+	auto state = static_cast<State *>(glfwGetWindowUserPointer(window));
+
 	glViewport(0, 0, width, height);
+
+	state->camera->set_aspect_ratio(static_cast<float>(width) / static_cast<float>(height));
 }
 
 void coordinate_sytems_app::initialize(GLFWwindow* window, State& state) {
@@ -75,7 +79,7 @@ void coordinate_sytems_app::initialize(GLFWwindow* window, State& state) {
 	state.scene.add(gltf::import("models/antique_camera/antique_camera.glb"));
 	state.scene.add(gltf::import("models/cube/cube.gltf"));
 
-	state.camera = std::make_shared<PerspectiveCamera>(55.0f, 800.0f/600.0f, 0.1f, 1000.0f);
+	state.camera = std::make_shared<PerspectiveCamera>(40.0f, 1300.0f/900.0f, 0.1f, 1000.0f);
 
 	const auto initial_camera_rotation = glm::vec2(glm::radians(-24.2f), glm::radians(63.6f));
 	state.camera_controls = std::make_unique<CameraOrbitControls>(state.camera, initial_camera_rotation);

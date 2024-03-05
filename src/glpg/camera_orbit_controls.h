@@ -27,7 +27,7 @@ private:
 	glm::vec2 m_previous_mouse_pos = glm::vec2(0.0f);
 	const std::weak_ptr<ICamera> m_camera;
 	const std::weak_ptr<GLFWwindow> m_window;
-	float m_camera_distance = 18.0f;
+	float m_camera_distance = 12.0f;
 	bool m_dirty = true;
 	bool m_previous_mouse_down = false;
 };
