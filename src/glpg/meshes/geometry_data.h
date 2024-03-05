@@ -3,21 +3,14 @@
 #include <vector>
 #include <cstdint>
 
+#include <glm/glm.hpp>
+
 namespace glpg::meshes {
 
 struct GeometryData {
-	std::vector<float> vertices;
-
-	unsigned int vertices_num_components;
-
-	unsigned int vertices_position_num_components;
-	unsigned int vertices_position_offset;
-
-	unsigned int vertices_normal_num_components;
-	unsigned int vertices_normal_offset;
-
-	unsigned int vertices_uv_num_components;
-	unsigned int vertices_uv_offset;
+	std::vector<glm::vec3> positions;
+	std::vector<glm::vec3> normals;
+	std::vector<glm::vec2> uvs;
 
 	std::vector<uint32_t> indices;
 };

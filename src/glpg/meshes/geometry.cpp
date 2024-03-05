@@ -17,13 +17,6 @@ void Geometry::setup() {
 	glGenVertexArrays(1, &m_vertex_array);
 	glBindVertexArray(m_vertex_array);
 
-	glGenBuffers(1, &m_vertex_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, m_vertex_buffer);
-	glBufferData(GL_ARRAY_BUFFER,
-		m_geometry_data.vertices.size() * sizeof(GLfloat),
-		m_geometry_data.vertices.data(),
-	GL_STATIC_DRAW);
-
 	glGenBuffers(1, &m_index_buffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_index_buffer);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER,
@@ -31,24 +24,37 @@ void Geometry::setup() {
 		m_geometry_data.indices.data(),
 	GL_STATIC_DRAW);
 
-	GLsizei vertex_stride = m_geometry_data.vertices_num_components * sizeof(GLfloat);
+	glGenBuffers(1, &m_positions_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, m_positions_buffer);
+	glBufferData(GL_ARRAY_BUFFER,
+		m_geometry_data.positions.size() * sizeof(glm::vec3),
+		m_geometry_data.positions.data(),
+	GL_STATIC_DRAW);
 
-	glVertexAttribPointer(
-		position_attrib_index, m_geometry_data.vertices_position_num_components, GL_FLOAT, false,
-		vertex_stride, reinterpret_cast<GLvoid*>(m_geometry_data.vertices_position_offset * sizeof(GLfloat))
-	);
+	GLsizei positions_stride = sizeof(glm::vec3);
+	glVertexAttribPointer(position_attrib_index, 3, GL_FLOAT, false, positions_stride, static_cast<GLvoid*>(0));
 	glEnableVertexAttribArray(position_attrib_index);
 
-	glVertexAttribPointer(
-		normal_attrib_index, m_geometry_data.vertices_normal_num_components, GL_FLOAT, false,
-		vertex_stride, reinterpret_cast<GLvoid*>(m_geometry_data.vertices_normal_offset * sizeof(GLfloat))
-	);
+	glGenBuffers(1, &m_normals_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, m_normals_buffer);
+	glBufferData(GL_ARRAY_BUFFER,
+		m_geometry_data.normals.size() * sizeof(glm::vec3),
+		m_geometry_data.normals.data(),
+	GL_STATIC_DRAW);
+
+	GLsizei normals_stride = sizeof(glm::vec3);
+	glVertexAttribPointer(normal_attrib_index, 3, GL_FLOAT, false, normals_stride, static_cast<GLvoid*>(0));
 	glEnableVertexAttribArray(normal_attrib_index);
 
-	glVertexAttribPointer(
-		uv_attrib_index, m_geometry_data.vertices_uv_num_components, GL_FLOAT, false,
-		vertex_stride, reinterpret_cast<GLvoid*>(m_geometry_data.vertices_uv_offset * sizeof(GLfloat))
-	);
+	glGenBuffers(1, &m_uvs_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, m_uvs_buffer);
+	glBufferData(GL_ARRAY_BUFFER,
+		m_geometry_data.uvs.size() * sizeof(glm::vec2),
+		m_geometry_data.uvs.data(),
+	GL_STATIC_DRAW);
+
+	GLsizei uvs_stride = sizeof(glm::vec2);
+	glVertexAttribPointer(uv_attrib_index, 2, GL_FLOAT, false, uvs_stride, static_cast<GLvoid*>(0));
 	glEnableVertexAttribArray(uv_attrib_index);
 
 	// unbind buffers to avoid accidental modification
@@ -60,7 +66,9 @@ void Geometry::setup() {
 Geometry::~Geometry() { release(); }
 
 void Geometry::release() {
-	glDeleteBuffers(1, &m_vertex_buffer);
+	glDeleteBuffers(1, &m_positions_buffer);
+	glDeleteBuffers(1, &m_normals_buffer);
+	glDeleteBuffers(1, &m_uvs_buffer);
 	glDeleteBuffers(1, &m_index_buffer);
 
 	glDeleteVertexArrays(1, &m_vertex_array);

@@ -24,7 +24,9 @@ public:
 private:
 	GeometryData m_geometry_data;
 	GLuint m_vertex_array = 0;
-	GLuint m_vertex_buffer = 0;
+	GLuint m_positions_buffer = 0;
+	GLuint m_normals_buffer = 0;
+	GLuint m_uvs_buffer = 0;
 	GLuint m_index_buffer = 0;
 
 	void setup();
