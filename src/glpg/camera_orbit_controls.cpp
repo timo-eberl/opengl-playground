@@ -4,7 +4,8 @@
 
 using glpg::CameraOrbitControls;
 
-CameraOrbitControls::CameraOrbitControls(const std::weak_ptr<ICamera> camera) : m_camera(camera) {}
+CameraOrbitControls::CameraOrbitControls(const std::weak_ptr<ICamera> camera, const glm::vec2 initial_rotation)
+	: m_camera(camera), m_rotation(initial_rotation) {}
 
 void CameraOrbitControls::scroll_callback(ScrollDirection scroll_direction) {
 	switch (scroll_direction) {

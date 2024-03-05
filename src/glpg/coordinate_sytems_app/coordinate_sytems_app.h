@@ -8,7 +8,7 @@
 #include "glpg/uniforms.h"
 #include "glpg/perspective_camera.h"
 #include "glpg/camera_orbit_controls.h"
-#include "glpg/meshes/mesh.h"
+#include "glpg/meshes.h"
 
 namespace glpg::coordinate_sytems_app {
 
@@ -22,7 +22,7 @@ struct State {
 	std::unique_ptr<CameraOrbitControls> camera_controls;
 	// int index_count = 0;
 	// bool index_format_short = false;
-	meshes::Mesh mesh;
+	std::vector<meshes::MeshNode> mesh_nodes;
 };
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);

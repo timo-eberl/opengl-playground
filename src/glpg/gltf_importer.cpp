@@ -2,6 +2,7 @@
 
 #include <cgltf.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <iostream>
 #include <cassert>
@@ -13,8 +14,8 @@ using namespace glpg;
 // declare "private" functions here instead of in the header
 namespace glpg::gltf_importer {
 
-void add_mesh_from_node(cgltf_node *node, meshes::Mesh &output_mesh);
-void add_all_meshes_from_node_recursive(cgltf_node *node, meshes::Mesh &output_mesh);
+void add_mesh_from_node(cgltf_node *node, meshes::Mesh &out_mesh);
+void add_all_meshes_from_node_recursive(cgltf_node *node, std::vector<meshes::MeshNode> &out_meshes);
 bool is_primitive_valid(cgltf_primitive &primitive, cgltf_node *node);
 void extract_attributes(
 	cgltf_primitive &primitive,
@@ -24,7 +25,7 @@ std::string result_to_string(cgltf_result result);
 
 } // glpg::gltf_importer
 
-meshes::Mesh gltf_importer::import(const std::string& path) {
+std::vector<meshes::MeshNode> gltf_importer::import(const std::string& path) {
 	std::string full_path = ASSETS_DIR + path;
 	cgltf_options options = {};
 	cgltf_data* data = nullptr;
@@ -33,50 +34,45 @@ meshes::Mesh gltf_importer::import(const std::string& path) {
 	// load binary buffers
 	auto load_buffers_result = cgltf_load_buffers(&options, data, full_path.c_str());
 
-	// treat the whole model as it would be a single mesh with multiple sections
-	auto mesh = meshes::Mesh();
+	auto meshes = std::vector<meshes::MeshNode>();
 
 	if (parse_result != cgltf_result_success) {
 		std::cerr << "\033[1;31m" // font color red
 			<< "Importing glTF failed: " << result_to_string(parse_result) << ")\n\n"
 			<< "\033[1;0m"; // reset styling
-		return mesh;
+		return meshes;
 	}
 	else if (load_buffers_result != cgltf_result_success) {
 		std::cerr << "\033[1;31m" // font color red
-			<< "Importing glTF failed: " << result_to_string(load_buffers_result) << ")\n\n"
+			<< "Loading glTF buffers failed: " << result_to_string(load_buffers_result) << ")\n\n"
 			<< "\033[1;0m"; // reset styling
-		return mesh;
+		return meshes;
 	}
 
 	for (size_t i = 0; i < data->scene->nodes_count; i++) {
 		auto node = data->scene->nodes[i];
-		add_all_meshes_from_node_recursive(node, mesh);
+		add_all_meshes_from_node_recursive(node, meshes);
 	}
 	cgltf_free(data);
 
-	return mesh;
+	return meshes;
 }
 
-void gltf_importer::add_all_meshes_from_node_recursive(cgltf_node *node, meshes::Mesh &output_mesh) {
+void gltf_importer::add_all_meshes_from_node_recursive(cgltf_node *node, std::vector<meshes::MeshNode> &out_meshes) {
 	if (node->mesh) {
-		add_mesh_from_node(node, output_mesh);
+		auto node_world_matrix = glm::identity<glm::mat4>();
+		cgltf_node_transform_world(node, reinterpret_cast<float *>(&node_world_matrix));
+
+		auto mesh_node = meshes::MeshNode(node_world_matrix);
+		add_mesh_from_node(node, *mesh_node.get_mesh());
+		out_meshes.push_back(mesh_node);
 	}
 	for (size_t i = 0; i < node->children_count; i++) {
-		add_all_meshes_from_node_recursive(node->children[i], output_mesh);
+		add_all_meshes_from_node_recursive(node->children[i], out_meshes);
 	}
 }
 
-void gltf_importer::add_mesh_from_node(cgltf_node *node, meshes::Mesh &output_mesh) {
-	float mat4 [16];
-	cgltf_node_transform_world(node, mat4);
-	const auto node_world_matrix = glm::mat4(
-		mat4[ 0], mat4[ 1], mat4[ 2], mat4[ 3],
-		mat4[ 4], mat4[ 5], mat4[ 6], mat4[ 7],
-		mat4[ 8], mat4[ 9], mat4[10], mat4[11],
-		mat4[12], mat4[13], mat4[14], mat4[15]
-	);
-
+void gltf_importer::add_mesh_from_node(cgltf_node *node, meshes::Mesh &out_mesh) {
 	for (size_t i = 0; i < node->mesh->primitives_count; i++) {
 		auto primitive = node->mesh->primitives[i];
 
@@ -126,8 +122,8 @@ void gltf_importer::add_mesh_from_node(cgltf_node *node, meshes::Mesh &output_me
 			uv_attribute, reinterpret_cast<float *>(geometry_data.uvs.data()), 2 * vertices_count
 		);
 
-		output_mesh.sections.push_back(meshes::MeshSection(
-			std::make_shared<meshes::Geometry>(std::move(geometry_data)),
+		out_mesh.sections.push_back(meshes::MeshSection(
+			std::make_shared<meshes::RenderGeometry>(std::move(geometry_data)),
 			nullptr
 		));
 	}

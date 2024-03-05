@@ -1,13 +1,15 @@
-#include "geometry.h"
+#include "glpg/meshes.h"
 
 #include <iostream>
 
-using glpg::meshes::Geometry;
+using glpg::meshes::RenderGeometry;
 using glpg::meshes::GeometryData;
 
-Geometry::Geometry(const GeometryData geometry_data) : m_geometry_data(std::move(geometry_data)) { setup(); }
+RenderGeometry::RenderGeometry(const GeometryData geometry_data) : m_geometry_data(std::move(geometry_data)) {}
 
-void Geometry::setup() {
+void RenderGeometry::send_to_gpu() {
+	if (m_vertex_array != 0) return; // nothing to do
+
 	static const GLint position_attrib_index = 0; // layout (location = 0)
 	static const GLint normal_attrib_index = 1; // layout (location = 1)
 	static const GLint uv_attrib_index = 2; // layout (location = 2)
@@ -63,9 +65,9 @@ void Geometry::setup() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-Geometry::~Geometry() { release(); }
+RenderGeometry::~RenderGeometry() { release(); }
 
-void Geometry::release() {
+void RenderGeometry::release() {
 	glDeleteBuffers(1, &m_positions_buffer);
 	glDeleteBuffers(1, &m_normals_buffer);
 	glDeleteBuffers(1, &m_uvs_buffer);
@@ -74,7 +76,14 @@ void Geometry::release() {
 	glDeleteVertexArrays(1, &m_vertex_array);
 }
 
-void Geometry::draw() const {
+void RenderGeometry::draw() const {
+	if (m_vertex_array == 0) {
+		std::cerr << "\033[1;31m" // font color red
+			<< "Cannot draw geometry, because `send_to_gpu` was not called yet.\n\n"
+			<< "\033[1;0m"; // reset styling
+		return;
+	}
+
 	glBindVertexArray(m_vertex_array);
 	glDrawElements(GL_TRIANGLES, m_geometry_data.indices.size(), GL_UNSIGNED_INT, NULL);
 	// unbind to avoid accidental modification

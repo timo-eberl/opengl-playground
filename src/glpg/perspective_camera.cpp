@@ -15,17 +15,11 @@ PerspectiveCamera::PerspectiveCamera(
 	update_projection_matrix();
 }
 
-glm::mat4 PerspectiveCamera::get_model_matrix() const {
-	return m_model_matrix;
-}
+glm::mat4 PerspectiveCamera::get_model_matrix() const { return m_model_matrix; }
 
-void PerspectiveCamera::set_model_matrix(glm::mat4 model_matrix) {
-	m_model_matrix = model_matrix;
-}
+void PerspectiveCamera::set_model_matrix(glm::mat4 model_matrix) { m_model_matrix = model_matrix; }
 
-glm::mat4 PerspectiveCamera::get_projection_matrix() const {
-	return m_projection_matrix;
-}
+glm::mat4 PerspectiveCamera::get_projection_matrix() const { return m_projection_matrix; }
 
 void PerspectiveCamera::set_fov(const float fov) {
 	m_fov = fov;

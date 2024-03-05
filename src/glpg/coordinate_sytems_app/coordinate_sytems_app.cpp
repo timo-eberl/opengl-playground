@@ -73,7 +73,15 @@ void coordinate_sytems_app::initialize(GLFWwindow* window, State& state) {
 	state.shader_program = std::make_unique<ShaderProgram>(
 		"shaders/coordinate_sytems_app/shader.vert", "shaders/coordinate_sytems_app/shader.frag");
 
-	state.mesh = gltf_importer::import("models/antique_camera/antique_camera.glb");
+	const auto antique_camera = gltf_importer::import("models/antique_camera/antique_camera.glb");
+	const auto cube = gltf_importer::import("models/cube/cube.gltf");
+	state.mesh_nodes.insert(state.mesh_nodes.end(), antique_camera.begin(), antique_camera.end());
+	state.mesh_nodes.insert(state.mesh_nodes.end(), cube.begin(), cube.end());
+	for (const auto & mesh_node : state.mesh_nodes) {
+		for (auto & section : mesh_node.get_mesh()->sections) {
+			section.send_to_gpu();
+		}
+	}
 
 	// cube with position and uvs
 	static const GLfloat vertices[] = {
@@ -126,12 +134,10 @@ void coordinate_sytems_app::initialize(GLFWwindow* window, State& state) {
 
 	glEnable(GL_DEPTH_TEST);
 
-	state.camera = std::make_shared<PerspectiveCamera>(45.0f, 800.0f/600.0f, 0.1f, 100.0f);
-	glm::mat4 cam_model_matrix = glm::translate(glm::identity<glm::mat4>(), glm::vec3(0.0f, 5.0f, 7.0f));
-	cam_model_matrix = glm::rotate(cam_model_matrix, glm::radians(-25.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	state.camera->set_model_matrix(cam_model_matrix);
+	state.camera = std::make_shared<PerspectiveCamera>(55.0f, 800.0f/600.0f, 0.1f, 1000.0f);
 
-	state.camera_controls = std::make_unique<CameraOrbitControls>(state.camera);
+	const auto initial_rotation = glm::vec2(glm::radians(-24.2f), glm::radians(63.6f));
+	state.camera_controls = std::make_unique<CameraOrbitControls>(state.camera, initial_rotation);
 
 	glfwSetScrollCallback(window, scroll_callback);
 }
@@ -164,34 +170,15 @@ void coordinate_sytems_app::render(GLFWwindow* window, State& state) {
 	glClearColor(0.32f, 0.27f, 0.40f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	static const glm::vec3 cube_positions[] = {
-		glm::vec3( 0.0f,  0.0f,  0.0f),
-		glm::vec3( 2.0f,  5.0f, -15.0f),
-		glm::vec3(-1.5f, -2.2f, -2.5f),
-		glm::vec3(-3.8f, -2.0f, -12.3f),
-		glm::vec3( 2.4f, -0.4f, -3.5f),
-		glm::vec3(-1.7f,  3.0f, -7.5f),
-		glm::vec3( 1.3f, -2.0f, -2.5f),
-		glm::vec3( 1.5f,  2.0f, -2.5f),
-		glm::vec3( 1.5f,  0.2f, -1.5f),
-		glm::vec3(-1.3f,  1.0f, -1.5f)
-	};
-
 	state.uniforms.set_mat4("view_matrix", glm::inverse(state.camera->get_model_matrix()));
 	state.uniforms.set_mat4("projection_matrix", state.camera->get_projection_matrix());
 
 	state.shader_program->use();
-	for (size_t i = 0; i < 1; i++) {
-		glm::mat4 model = glm::identity<glm::mat4>();
-		model = glm::translate(model, cube_positions[i]);
-		// model = glm::rotate(
-		// 	model, (float)glfwGetTime() * glm::radians(50.0f * (i%3+1)), glm::vec3(0.5f, (i+3)/10.0f, 0.0f)
-		// );
-		// model = glm::scale(model, glm::vec3(0.5, 1.0, 1.5));
-		state.uniforms.set_mat4("model_matrix", model);
-	
+	for (const auto &mesh_node : state.mesh_nodes) {
+		state.uniforms.set_mat4("model_matrix", mesh_node.get_model_matrix());
+
 		state.uniforms.apply_to_program(*state.shader_program);
-		state.mesh.draw();
+		mesh_node.get_mesh()->draw();
 	}
 
 	// unbind to avoid accidental modification

@@ -29,7 +29,8 @@ set(SOURCES
 	src/glpg/gltf_importer.cpp
 	src/glpg/meshes/mesh.cpp
 	src/glpg/meshes/mesh_section.cpp
-	src/glpg/meshes/geometry.cpp
+	src/glpg/meshes/render_geometry.cpp
+	src/glpg/meshes/mesh_node.cpp
 	src/glpg/material.cpp
 	src/glpg/template_app/template_app.cpp
 	src/glpg/hello_triangle/hello_triangle.cpp

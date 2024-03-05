@@ -1,11 +1,9 @@
 #pragma once
 
-#include <string>
-
-#include "meshes/mesh.h"
+#include "meshes.h"
 
 namespace glpg::gltf_importer {
 
-meshes::Mesh import(const std::string& path);
+std::vector<meshes::MeshNode> import(const std::string& path);
 
 } // glpg::gltf_importer
