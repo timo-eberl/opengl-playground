@@ -70,7 +70,7 @@ void coordinate_sytems_app::framebuffer_size_callback(GLFWwindow* window, int wi
 }
 
 void coordinate_sytems_app::initialize(GLFWwindow* window, State& state) {
-	state.renderer.set_clear_color(glm::vec4(0.247f, 0.247f, 0.247f, 1.0f));
+	state.renderer.set_clear_color(glm::vec4(0.231f, 0.231f, 0.231f, 1.0f));
 
 	state.scene.add(gltf::import("models/antique_camera/antique_camera.glb"));
 	state.scene.add(gltf::import("models/cube/cube.gltf"));
@@ -103,7 +103,9 @@ void coordinate_sytems_app::process(GLFWwindow* window, State& state) {
 	state.camera_controls->update(*window);
 
 	if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS) {
-		state.scene = gltf::import("models/antique_camera/antique_camera.glb");
+		state.scene = {};
+		state.scene.add(gltf::import("models/antique_camera/antique_camera.glb"));
+		state.scene.add(gltf::import("models/cube/cube.gltf"));
 	}
 }
 

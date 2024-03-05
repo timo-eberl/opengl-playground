@@ -74,6 +74,7 @@ public:
 private:
 	std::shared_ptr<Mesh> m_mesh;
 	glm::mat4 m_model_matrix;
+	glm::mat3 m_normal_local_to_world_matrix;
 };
 
 } // glpg::meshes
