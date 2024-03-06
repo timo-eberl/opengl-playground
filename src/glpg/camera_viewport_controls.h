@@ -10,9 +10,9 @@
 
 namespace glpg {
 
-class CameraOrbitControls {
+class CameraViewportControls {
 public:
-	CameraOrbitControls(const glm::vec2 initial_rotation = glm::vec2(0.0f));
+	CameraViewportControls(const glm::vec2 initial_rotation = glm::vec2(0.0f));
 	void update(GLFWwindow& window, ICamera &camera); // needs to be called every frame
 	void set_target(const glm::vec3 target);
 	float mouse_orbit_sensitivity = 1.0f;

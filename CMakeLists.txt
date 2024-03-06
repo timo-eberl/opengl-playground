@@ -25,7 +25,7 @@ set(SOURCES
 	src/glpg/uniforms.cpp
 	src/glpg/texture.cpp
 	src/glpg/perspective_camera.cpp
-	src/glpg/camera_orbit_controls.cpp
+	src/glpg/camera_viewport_controls.cpp
 	src/glpg/gltf.cpp
 	src/glpg/meshes/render_geometry.cpp
 	src/glpg/meshes/mesh_node.cpp

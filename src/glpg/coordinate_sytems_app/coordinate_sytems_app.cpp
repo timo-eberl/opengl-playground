@@ -82,7 +82,7 @@ void coordinate_sytems_app::initialize(GLFWwindow* window, State& state) {
 	state.camera = std::make_shared<PerspectiveCamera>(40.0f, 1300.0f/900.0f, 0.1f, 1000.0f);
 
 	const auto initial_camera_rotation = glm::vec2(glm::radians(-24.2f), glm::radians(63.6f));
-	state.camera_controls = std::make_unique<CameraOrbitControls>(initial_camera_rotation);
+	state.camera_controls = std::make_unique<CameraViewportControls>(initial_camera_rotation);
 
 	glfwSetScrollCallback(window, scroll_callback);
 }
@@ -92,10 +92,10 @@ void coordinate_sytems_app::scroll_callback(GLFWwindow* window, double xoffset, 
 
 	if (state) {
 		if (yoffset == 1.0) {
-			state->camera_controls->scroll_callback(CameraOrbitControls::UP);
+			state->camera_controls->scroll_callback(CameraViewportControls::UP);
 		}
 		else if (yoffset == -1.0) {
-			state->camera_controls->scroll_callback(CameraOrbitControls::DOWN);
+			state->camera_controls->scroll_callback(CameraViewportControls::DOWN);
 		}
 	}
 }

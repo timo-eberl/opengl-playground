@@ -7,7 +7,7 @@
 #include "glpg/shader_program.h"
 #include "glpg/uniforms.h"
 #include "glpg/perspective_camera.h"
-#include "glpg/camera_orbit_controls.h"
+#include "glpg/camera_viewport_controls.h"
 #include "glpg/scene.h"
 #include "glpg/renderer.h"
 
@@ -17,7 +17,7 @@ int run();
 
 struct State {
 	std::shared_ptr<PerspectiveCamera> camera;
-	std::unique_ptr<CameraOrbitControls> camera_controls;
+	std::unique_ptr<CameraViewportControls> camera_controls;
 	Scene scene;
 	Renderer renderer;
 };

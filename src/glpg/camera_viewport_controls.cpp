@@ -1,12 +1,12 @@
-#include "camera_orbit_controls.h"
+#include "camera_viewport_controls.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 
-using glpg::CameraOrbitControls;
+using glpg::CameraViewportControls;
 
-CameraOrbitControls::CameraOrbitControls(const glm::vec2 initial_rotation) : m_rotation(initial_rotation) {}
+CameraViewportControls::CameraViewportControls(const glm::vec2 initial_rotation) : m_rotation(initial_rotation) {}
 
-void CameraOrbitControls::scroll_callback(ScrollDirection scroll_direction) {
+void CameraViewportControls::scroll_callback(ScrollDirection scroll_direction) {
 	switch (scroll_direction) {
 	case UP:
 		m_camera_distance *= 0.8f;
@@ -19,12 +19,12 @@ void CameraOrbitControls::scroll_callback(ScrollDirection scroll_direction) {
 	}
 }
 
-void CameraOrbitControls::set_target(const glm::vec3 target) {
+void CameraViewportControls::set_target(const glm::vec3 target) {
 	m_target = target;
 	m_dirty = true;
 }
 
-void CameraOrbitControls::update(GLFWwindow& window, ICamera &camera) {
+void CameraViewportControls::update(GLFWwindow& window, ICamera &camera) {
 	const bool shift_down = glfwGetKey(&window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
 	const bool mouse_down = glfwGetMouseButton(&window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
 	double x; double y; glfwGetCursorPos(&window, &x, &y);
