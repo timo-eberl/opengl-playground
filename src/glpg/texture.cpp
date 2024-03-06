@@ -2,7 +2,7 @@
 
 #include <stb_image.h>
 
-#include <iostream>
+#include "log.h"
 
 #define ASSETS_DIR _ASSETS_DIR
 
@@ -59,9 +59,7 @@ void Texture::load() {
 	std::string path = ASSETS_DIR + m_path;
 	unsigned char* texture_data = stbi_load(path.c_str(), &tex_width, &tex_height, &tex_n_channels, 0);
 	if (!texture_data) {
-		std::cerr << "\033[1;31m"; // font color red
-		std::cerr << "Failed to load texture \"" << path << "\"\n\n";
-		std::cerr << "\033[1;0m"; // reset styling
+		log::error("Failed to load texture \"" + path + "\"");
 		m_id = 0;
 	}
 	else {

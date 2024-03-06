@@ -1,9 +1,10 @@
 #include "shader_program.h"
 
-#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <cstring>
+
+#include "log.h"
 
 #define ASSETS_DIR _ASSETS_DIR
 
@@ -38,11 +39,13 @@ void ShaderProgram::create() {
 	const GLchar* error_vertex_shader_source =
 		"#version 330 core\n"
 		"layout (location = 0) in vec3 a_position;\n"
-		"void main() { gl_Position = vec4(a_position.x, a_position.y, a_position.z, 1.0); }\0";
+		"uniform mat4 view_projection_matrix;\n"
+		"uniform mat4 model_matrix;\n"
+		"void main() { gl_Position = view_projection_matrix * model_matrix * vec4(a_position, 1.0); }\n\0";
 	const GLchar* error_fragment_shader_source =
 		"#version 330 core\n"
 		"out vec4 frag_color;\n"
-		"void main() { frag_color = vec4(1.0f, 0.0f, 1.0f, 1.0f); }\0";
+		"void main() { frag_color = vec4(1.0f, 0.0f, 1.0f, 1.0f); }\n\0";
 
 	const std::string v_source = read_file(ASSETS_DIR + m_vertex_shader_path);
 	const std::string f_source = read_file(ASSETS_DIR + m_fragment_shader_path);
@@ -52,11 +55,12 @@ void ShaderProgram::create() {
 
 	// if compilation failed, use error shader
 	if (!m_good) {
-		std::cerr << "Replacing with error shader\n";
 		glDeleteShader(vertex_shader);
 		glDeleteShader(fragment_shader);
 		vertex_shader = compile_shader(error_vertex_shader_source, true);
 		fragment_shader = compile_shader(error_fragment_shader_source, false);
+
+		log::error("Replacing with error shader", false);
 	}
 
 	m_id = glCreateProgram();
@@ -75,16 +79,13 @@ void ShaderProgram::create() {
 		const uint message_size = 1024;
 		GLchar message[message_size];
 		glGetProgramInfoLog(m_id, message_size, NULL, message);
-		std::cerr << "\033[1;31m"; // font color red
-		std::cerr << "Linking program failed\n" << message << std::endl;
-		std::cerr << "\033[1;0m"; // reset styling
+
+		log::error("Linking program failed", false);
+		log::error(std::string(message));
 	}
 
 	if (m_good) {
-		std::cout << "\033[1;32m"; // font color green
-		std::cout << "Shader program created";
-		std::cout << "\033[1;0m"; // reset styling
-		std::cout << std::endl;
+		log::success("Shader program created successfully (" + m_vertex_shader_path + " > " + m_fragment_shader_path + ")");
 	}
 }
 
@@ -104,10 +105,7 @@ std::string ShaderProgram::read_file(const std::string& path) {
 	} catch (std::ifstream::failure e) {
 		m_good = false;
 
-		std::cerr << "\033[1;31m"; // font color red
-		std::cerr << "Exception opening/reading/closing file \"" << path << "\": "
-			<< std::strerror(errno) << "\n\n";
-		std::cerr << "\033[1;0m"; // reset styling
+		log::error(std::string("Exception opening/reading/closing file \"") + path + "\": " + std::strerror(errno));
 	}
 
 	return v_source;
@@ -126,10 +124,11 @@ GLuint ShaderProgram::compile_shader(const GLchar* source, const bool vertex) {
 		const uint message_size = 1024;
 		GLchar message[message_size];
 		glGetShaderInfoLog(shader, message_size, NULL, message);
-		std::cerr << "\033[1;31m"; // font color red
-		std::cerr << (vertex ? "Vertex" : "Fragment") << " shader compilation failed\n"
-			<< message << std::endl;
-		std::cerr << "\033[1;0m"; // reset styling
+
+		log::error(
+			std::string(vertex ? "Vertex" : "Fragment") + " shader compilation failed ("
+			+ (vertex ? m_vertex_shader_path : m_fragment_shader_path) + ")", false);
+		log::error(message);
 	}
 
 	return shader;

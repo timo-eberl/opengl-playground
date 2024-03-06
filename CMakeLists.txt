@@ -31,6 +31,7 @@ set(SOURCES
 	src/glpg/meshes/mesh_node.cpp
 	src/glpg/scene.cpp
 	src/glpg/renderer.cpp
+	src/glpg/log.cpp
 	src/glpg/template_app/template_app.cpp
 	src/glpg/hello_triangle/hello_triangle.cpp
 	src/glpg/shader_intro/shader_intro.cpp

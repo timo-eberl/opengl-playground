@@ -4,8 +4,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <iostream>
 #include <cassert>
+
+#include "log.h"
 
 #define ASSETS_DIR _ASSETS_DIR
 
@@ -29,30 +30,17 @@ static void extract_attributes(
 	}
 }
 
-static bool is_primitive_valid(cgltf_primitive &primitive, cgltf_node *node) {
+static bool is_primitive_valid(cgltf_primitive &primitive, cgltf_node *node, std::vector<std::string> &unsupported) {
 	if (primitive.type != cgltf_primitive_type_triangles) {
-		std::cerr << "\033[1;31m" // font color red
-			<< "Unsupported mesh type. Only meshes of type cgltf_primitive_type_triangles are supported ("
-			<< node->name << '.' << node->mesh->name << ")\n\n"
-			<< "\033[1;0m"; // reset styling
-		return false;
+		unsupported.push_back("Mesh type other than primitive triangles");
 	}
-	
 	if (!primitive.indices) {
-		std::cerr << "\033[1;31m" // font color red
-			<< "Non-indexed meshes are not supported ("
-			<< node->name << '.' << node->mesh->name << ")\n\n"
-			<< "\033[1;0m"; // reset styling
-		return false;
+		unsupported.push_back("Non-indexed mesh");
 	}
-	
 	if (primitive.indices->component_type != cgltf_component_type_r_16u // unsigned short
 		&& primitive.indices->component_type != cgltf_component_type_r_32u // unsigned int
 	) {
-		std::cerr << "\033[1;31m" // font color red
-			<< "Index format other than unsigned short or unsigned int is not supported.\n\n"
-			<< "\033[1;0m"; // reset styling
-		return false;
+		unsupported.push_back("Index format other than unsigned short or unsigned int");
 	}
 
 	cgltf_accessor *pos_attribute; cgltf_accessor *normal_attribute; cgltf_accessor *uv_attribute;
@@ -61,38 +49,33 @@ static bool is_primitive_valid(cgltf_primitive &primitive, cgltf_node *node) {
 		normal_attribute->component_type != cgltf_component_type_r_32f ||
 		uv_attribute->component_type != cgltf_component_type_r_32f
 	) {
-		std::cerr << "\033[1;31m" // font color red
-			<< "Unsupported attribute type. Only 32 bit floats are supported.\n\n"
-			<< "\033[1;0m"; // reset styling
-		return false;
+		unsupported.push_back("Attribute type other than 32 bit float");
 	}
 	if (pos_attribute->type != cgltf_type_vec3) {
-		std::cerr << "\033[1;31m" // font color red
-			<< "Position attribute must be a vector 3..\n\n"
-			<< "\033[1;0m"; // reset styling
-		return false;
+		unsupported.push_back("Position attribute with a number of components other than 3");
 	}
 	if (normal_attribute->type != cgltf_type_vec3) {
-		std::cerr << "\033[1;31m" // font color red
-			<< "Normal attribute must be a vector 3..\n\n"
-			<< "\033[1;0m"; // reset styling
-		return false;
+		unsupported.push_back("Normal attribute with a number of components other than 3");
 	}
 	if (uv_attribute->type != cgltf_type_vec2) {
-		std::cerr << "\033[1;31m" // font color red
-			<< "Normal attribute must be a vector 2..\n\n"
-			<< "\033[1;0m"; // reset styling
-		return false;
+		unsupported.push_back("Texture Coordinate attribute with a number of components other than 2");
 	}
 
-	return true;
+	return unsupported.size() == 0;
 }
 
-static void add_mesh_from_node(cgltf_node *node, meshes::Mesh &out_mesh) {
+static void add_mesh_from_node(cgltf_node *node, meshes::Mesh &out_mesh, std::vector<std::string> &unsupported) {
 	for (size_t i = 0; i < node->mesh->primitives_count; i++) {
 		auto primitive = node->mesh->primitives[i];
 
-		if (!is_primitive_valid(primitive, node)) continue;
+		std::vector<std::string> unsupported_new;
+		if (!is_primitive_valid(primitive, node, unsupported_new)) {
+			for (auto &new_error : unsupported_new) {
+				new_error = new_error + " (" + node->name + "." + node->mesh->name + ")";
+			}
+			unsupported.insert(unsupported.end(), unsupported_new.begin(), unsupported_new.end());
+			continue;
+		}
 
 		auto geometry_data = glpg::meshes::GeometryData();
 
@@ -145,17 +128,17 @@ static void add_mesh_from_node(cgltf_node *node, meshes::Mesh &out_mesh) {
 	}
 }
 
-static void add_all_meshes_from_node_recursive(cgltf_node *node, Scene &scene) {
+static void add_all_meshes_from_node_recursive(cgltf_node *node, Scene &scene, std::vector<std::string> &unsupported) {
 	if (node->mesh) {
 		auto node_world_matrix = glm::identity<glm::mat4>();
 		cgltf_node_transform_world(node, reinterpret_cast<float *>(&node_world_matrix));
 
 		auto mesh_node = std::make_shared<meshes::MeshNode>(node_world_matrix);
-		add_mesh_from_node(node, *mesh_node->get_mesh());
+		add_mesh_from_node(node, *mesh_node->get_mesh(), unsupported);
 		scene.add(mesh_node);
 	}
 	for (size_t i = 0; i < node->children_count; i++) {
-		add_all_meshes_from_node_recursive(node->children[i], scene);
+		add_all_meshes_from_node_recursive(node->children[i], scene, unsupported);
 	}
 }
 
@@ -188,22 +171,30 @@ Scene gltf::import(const std::string& path) {
 	Scene scene = {};
 
 	if (parse_result != cgltf_result_success) {
-		std::cerr << "\033[1;31m" // font color red
-			<< "Importing glTF failed: " << result_to_string(parse_result) << "\n\n"
-			<< "\033[1;0m"; // reset styling
+		log::error("Importing glTF failed: " + result_to_string(parse_result) + " (" + path + ")");
 		return scene;
 	}
 	else if (load_buffers_result != cgltf_result_success) {
-		std::cerr << "\033[1;31m" // font color red
-			<< "Loading glTF buffers failed: " << result_to_string(load_buffers_result) << "\n\n"
-			<< "\033[1;0m"; // reset styling
+		log::error("Loading glTF buffers failed: " + result_to_string(load_buffers_result) + " (" + path + ")");
 		return scene;
 	}
 
+	std::vector<std::string> unsupported_features = {};
 	for (size_t i = 0; i < data->scene->nodes_count; i++) {
 		auto node = data->scene->nodes[i];
-		add_all_meshes_from_node_recursive(node, scene);
+		add_all_meshes_from_node_recursive(node, scene, unsupported_features);
 	}
+
+	if (unsupported_features.size() > 0) {
+		log::error("Incomplete glTF import, because it uses unsupported features (" + path + "):");
+		for (const auto &error : unsupported_features) {
+			log::error("\t- " + error);
+		}
+	}
+	else {
+		log::success("glTF imported successfully (" + path + ")");
+	}
+
 	cgltf_free(data);
 
 	return scene;

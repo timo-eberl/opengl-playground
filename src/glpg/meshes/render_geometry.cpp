@@ -1,6 +1,6 @@
 #include "glpg/meshes.h"
 
-#include <iostream>
+#include "glpg/log.h"
 
 using glpg::meshes::RenderGeometry;
 using glpg::meshes::GeometryData;
@@ -78,9 +78,7 @@ void RenderGeometry::release() {
 
 void RenderGeometry::draw() const {
 	if (m_vertex_array == 0) {
-		std::cerr << "\033[1;31m" // font color red
-			<< "Cannot draw geometry, because `send_to_gpu` was not called yet.\n\n"
-			<< "\033[1;0m"; // reset styling
+		log::warn("Cannot draw geometry, because `send_to_gpu` was not called yet.");
 		return;
 	}
 
