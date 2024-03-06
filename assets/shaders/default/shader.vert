@@ -15,7 +15,7 @@ uniform mat4 view_projection_matrix;
 uniform mat3 normal_local_to_world_matrix;
 
 void main() {
-	world_position = vec3(model_matrix * vec4(a_position.x, a_position.y, a_position.z, 1.0));
+	world_position = vec3(model_matrix * vec4(a_position, 1.0));
 	gl_Position = view_projection_matrix * vec4(world_position, 1.0);
 	uv = a_uv;
 	world_normal = normal_local_to_world_matrix * a_normal;

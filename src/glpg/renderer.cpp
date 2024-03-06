@@ -28,6 +28,8 @@ void Renderer::render(Scene &scene, const ICamera &camera) {
 	for (const auto & mesh_node : scene.mesh_nodes) {
 		mesh_node->draw(scene.global_uniforms);
 	}
+
+	m_axes_drawer.draw(scene);
 }
 
 void Renderer::set_clear_color(glm::vec4 clear_color) { m_clear_color = clear_color; }

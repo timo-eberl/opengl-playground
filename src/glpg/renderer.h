@@ -4,6 +4,7 @@
 
 #include "scene.h"
 #include "i_camera.h"
+#include "axes_drawer.h"
 
 namespace glpg {
 
@@ -20,6 +21,7 @@ public:
 	void clear_depth();
 private:
 	glm::vec4 m_clear_color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	glpg::AxesDrawer m_axes_drawer = {};
 };
 
 } // glpg

@@ -32,6 +32,7 @@ set(SOURCES
 	src/glpg/scene.cpp
 	src/glpg/renderer.cpp
 	src/glpg/log.cpp
+	src/glpg/axes_drawer.cpp
 	src/glpg/template_app/template_app.cpp
 	src/glpg/hello_triangle/hello_triangle.cpp
 	src/glpg/shader_intro/shader_intro.cpp
