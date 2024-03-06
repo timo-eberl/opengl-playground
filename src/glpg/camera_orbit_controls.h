@@ -17,19 +17,21 @@ public:
 	);
 	void update(GLFWwindow& window); // needs to be called every frame
 	void set_target(const glm::vec3 target);
-	glm::vec2 mouse_sensitivity = glm::vec2(1.0f);
+	float mouse_orbit_sensitivity = 1.0f;
+	float mouse_pan_sensitivity = 1.0f;
 
 	enum ScrollDirection { UP, DOWN };
 	void scroll_callback(ScrollDirection scroll_direction);
 private:
+	enum ControlMode { IDLE, PAN, ORBIT };
+
 	glm::vec3 m_target = glm::vec3(0.0f);
 	glm::vec2 m_rotation;
 	glm::vec2 m_previous_mouse_pos = glm::vec2(0.0f);
 	const std::weak_ptr<ICamera> m_camera;
-	const std::weak_ptr<GLFWwindow> m_window;
 	float m_camera_distance = 12.0f;
+	ControlMode m_previous_control_mode = IDLE;
 	bool m_dirty = true;
-	bool m_previous_mouse_down = false;
 };
 
 } // glpg

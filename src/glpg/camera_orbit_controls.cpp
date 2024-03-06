@@ -26,26 +26,49 @@ void CameraOrbitControls::set_target(const glm::vec3 target) {
 }
 
 void CameraOrbitControls::update(GLFWwindow& window) {
-	const bool mouse_down = glfwGetMouseButton(&window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
-	if (mouse_down) {
+	if (const auto sp_cam = m_camera.lock()) {
+		const bool shift_down = glfwGetKey(&window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
+		const bool mouse_down = glfwGetMouseButton(&window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
 		double x; double y; glfwGetCursorPos(&window, &x, &y);
 		const auto mouse_pos = glm::vec2(x, y);
+		const auto mouse_movement = glm::vec2(
+			(mouse_pos.x - m_previous_mouse_pos.x),
+			(mouse_pos.y - m_previous_mouse_pos.y)
+		);
 
-		if (!m_previous_mouse_down) {
-			m_previous_mouse_pos = mouse_pos;
+		ControlMode control_mode = IDLE;
+		if (m_previous_control_mode == ORBIT && mouse_down) {
+			control_mode = ORBIT;
+		}
+		else if (m_previous_control_mode == PAN && mouse_down) {
+			control_mode = PAN;
+		}
+		else if (shift_down && mouse_down) {
+			control_mode = PAN;
+		}
+		else if (!shift_down && mouse_down) {
+			control_mode = ORBIT;
 		}
 
-		m_rotation.y -= (mouse_pos.x - m_previous_mouse_pos.x) * mouse_sensitivity.x * 0.01f;
-		m_rotation.x -= (mouse_pos.y - m_previous_mouse_pos.y) * mouse_sensitivity.y * 0.01f;
+		switch (control_mode) {
+			case ORBIT: {
+				m_rotation -= glm::vec2(mouse_movement.y, mouse_movement.x) * mouse_orbit_sensitivity * 0.01f;
+				m_dirty = true;
+			} break;
+			case PAN: {
+				const auto movement_2d = mouse_movement * m_camera_distance * mouse_pan_sensitivity * 0.00078f;
+				const auto movement_3d_local = glm::vec3(-movement_2d.x, movement_2d.y, 0.0f);
+				const auto movement_3d_world = glm::mat3(sp_cam->get_model_matrix()) * movement_3d_local;
+				m_target += movement_3d_world;
+				m_dirty = true;
+			} break;
+		}
 
-		m_dirty = true;
+		m_previous_control_mode = control_mode;
 		m_previous_mouse_pos = mouse_pos;
-	}
-	m_previous_mouse_down = mouse_down;
 
-	if (!m_dirty) return;
+		if (!m_dirty) return;
 
-	if (const auto sp_cam = m_camera.lock()) {
 		glm::mat4 cam_model_matrix = glm::identity<glm::mat4>();
 		cam_model_matrix = glm::translate(cam_model_matrix, m_target);
 		cam_model_matrix = glm::rotate(
