@@ -43,21 +43,23 @@ static bool is_primitive_valid(cgltf_primitive &primitive, cgltf_node *node, std
 		unsupported.push_back("Index format other than unsigned short or unsigned int");
 	}
 
-	cgltf_accessor *pos_attribute; cgltf_accessor *normal_attribute; cgltf_accessor *uv_attribute;
+	cgltf_accessor *pos_attribute = nullptr;
+	cgltf_accessor *normal_attribute = nullptr; // optional
+	cgltf_accessor *uv_attribute = nullptr; // optional
 	extract_attributes(primitive, &pos_attribute, &normal_attribute, &uv_attribute);
 	if (pos_attribute->component_type != cgltf_component_type_r_32f ||
-		normal_attribute->component_type != cgltf_component_type_r_32f ||
-		uv_attribute->component_type != cgltf_component_type_r_32f
+		(normal_attribute && normal_attribute->component_type != cgltf_component_type_r_32f) ||
+		(uv_attribute && uv_attribute->component_type != cgltf_component_type_r_32f)
 	) {
 		unsupported.push_back("Attribute type other than 32 bit float");
 	}
 	if (pos_attribute->type != cgltf_type_vec3) {
 		unsupported.push_back("Position attribute with a number of components other than 3");
 	}
-	if (normal_attribute->type != cgltf_type_vec3) {
+	if (normal_attribute && normal_attribute->type != cgltf_type_vec3) {
 		unsupported.push_back("Normal attribute with a number of components other than 3");
 	}
-	if (uv_attribute->type != cgltf_type_vec2) {
+	if (uv_attribute && uv_attribute->type != cgltf_type_vec2) {
 		unsupported.push_back("Texture Coordinate attribute with a number of components other than 2");
 	}
 
@@ -100,26 +102,34 @@ static void add_mesh_from_node(cgltf_node *node, meshes::Mesh &out_mesh, std::ve
 			} break;
 		}
 
-		cgltf_accessor *pos_attribute; cgltf_accessor *normal_attribute; cgltf_accessor *uv_attribute;
+		cgltf_accessor *pos_attribute = nullptr;
+		cgltf_accessor *normal_attribute = nullptr; // optional
+		cgltf_accessor *uv_attribute = nullptr; // optional
 		extract_attributes(primitive, &pos_attribute, &normal_attribute, &uv_attribute);
 
+		assert(pos_attribute); // position attribute must exist
 		const auto vertices_count = pos_attribute->count;
-		assert(vertices_count == normal_attribute->count);
-		assert(vertices_count == uv_attribute->count);
+		// normal and uvs are optional
+		assert(!normal_attribute || vertices_count == normal_attribute->count);
+		assert(!uv_attribute || vertices_count == uv_attribute->count);
 
 		// load attribute data from storage buffer into geometry data
 		geometry_data.positions.resize(vertices_count);
-		geometry_data.normals.resize(vertices_count);
-		geometry_data.uvs.resize(vertices_count);
 		cgltf_accessor_unpack_floats(
 			pos_attribute, reinterpret_cast<float *>(geometry_data.positions.data()), 3 * vertices_count
 		);
-		cgltf_accessor_unpack_floats(
-			normal_attribute, reinterpret_cast<float *>(geometry_data.normals.data()), 3 * vertices_count
-		);
-		cgltf_accessor_unpack_floats(
-			uv_attribute, reinterpret_cast<float *>(geometry_data.uvs.data()), 2 * vertices_count
-		);
+		if (normal_attribute) {
+			geometry_data.normals.resize(vertices_count);
+			cgltf_accessor_unpack_floats(
+				normal_attribute, reinterpret_cast<float *>(geometry_data.normals.data()), 3 * vertices_count
+			);
+		}
+		if (uv_attribute) {
+			geometry_data.uvs.resize(vertices_count);
+			cgltf_accessor_unpack_floats(
+				uv_attribute, reinterpret_cast<float *>(geometry_data.uvs.data()), 2 * vertices_count
+			);
+		}
 
 		out_mesh.sections.push_back(meshes::MeshSection(
 			std::make_shared<meshes::RenderGeometry>(std::move(geometry_data)),
@@ -186,7 +196,7 @@ Scene gltf::import(const std::string& path) {
 	}
 
 	if (unsupported_features.size() > 0) {
-		log::error("Incomplete glTF import, because it uses unsupported features (" + path + "):");
+		log::error("Incomplete glTF import. " + path + " uses unsupported features:");
 		for (const auto &error : unsupported_features) {
 			log::error("\t- " + error);
 		}
