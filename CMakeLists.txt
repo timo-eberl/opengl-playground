@@ -21,23 +21,21 @@ add_subdirectory(cgltf)
 # our project
 add_compile_definitions(_ASSETS_DIR=\"${PROJECT_SOURCE_DIR}/assets/\")
 set(SOURCES
+	src/glpg/log.cpp
 	src/glpg/shader_program.cpp
 	src/glpg/uniforms.cpp
 	src/glpg/texture.cpp
 	src/glpg/perspective_camera.cpp
 	src/glpg/camera_viewport_controls.cpp
 	src/glpg/gltf.cpp
-	src/glpg/meshes/render_geometry.cpp
-	src/glpg/meshes/mesh_node.cpp
+	src/glpg/mesh_node.cpp
 	src/glpg/scene.cpp
-	src/glpg/renderer.cpp
-	src/glpg/log.cpp
-	src/glpg/axes_drawer.cpp
-	src/glpg/template_app/template_app.cpp
-	src/glpg/hello_triangle/hello_triangle.cpp
-	src/glpg/shader_intro/shader_intro.cpp
-	src/glpg/textures_app/textures_app.cpp
-	src/glpg/coordinate_sytems_app/coordinate_sytems_app.cpp
+	src/glpg/opengl_renderer.cpp
+	src/glpg/opengl_gpu_data.cpp
+	src/glpg/opengl_axes_drawer.cpp
+	src/glpg/opengl_uniforms.cpp
+	src/glpg/examples/hello_triangle/hello_triangle.cpp
+	src/glpg/examples/demo/demo.cpp
 )
 add_executable(${PROJECT_NAME}
 	src/main.cpp

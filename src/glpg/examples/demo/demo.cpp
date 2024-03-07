@@ -7,11 +7,11 @@
 #include "glpg/shader_program.h"
 #include "glpg/gltf.h"
 
-#include "coordinate_sytems_app.h"
+#include "demo.h"
 
 using namespace glpg;
 
-int coordinate_sytems_app::run() {
+int demo::run() {
 	glfwInit();
 
 	// tell GLFW we are using OpenGL 4.6
@@ -65,7 +65,7 @@ int coordinate_sytems_app::run() {
 	return 0;
 }
 
-void coordinate_sytems_app::framebuffer_size_callback(GLFWwindow* window, int width, int height) {
+void demo::framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	auto state = static_cast<State *>(glfwGetWindowUserPointer(window));
 
 	glViewport(0, 0, width, height);
@@ -73,11 +73,13 @@ void coordinate_sytems_app::framebuffer_size_callback(GLFWwindow* window, int wi
 	state->camera->set_aspect_ratio(static_cast<float>(width) / static_cast<float>(height));
 }
 
-void coordinate_sytems_app::initialize(GLFWwindow* window, State& state) {
+void demo::initialize(GLFWwindow* window, State& state) {
 	state.renderer.set_clear_color(glm::vec4(0.231f, 0.231f, 0.231f, 1.0f));
 
-	state.scene.add(gltf::import("models/antique_camera/antique_camera.glb"));
-	state.scene.add(gltf::import("models/cube/cube.gltf"));
+	state.scene = std::make_shared<Scene>();
+	state.scene->add(gltf::import("models/antique_camera/antique_camera.glb"));
+	state.scene->add(gltf::import("models/cube/cube.gltf"));
+	state.scene_gpu_data = std::make_shared<OpenGLSceneGPUData>(state.scene);
 
 	state.camera = std::make_shared<PerspectiveCamera>(40.0f, 1300.0f/900.0f, 0.1f, 1000.0f);
 
@@ -87,7 +89,7 @@ void coordinate_sytems_app::initialize(GLFWwindow* window, State& state) {
 	glfwSetScrollCallback(window, scroll_callback);
 }
 
-void coordinate_sytems_app::scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+void demo::scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 	auto state = static_cast<State *>(glfwGetWindowUserPointer(window));
 
 	if (state) {
@@ -100,19 +102,20 @@ void coordinate_sytems_app::scroll_callback(GLFWwindow* window, double xoffset, 
 	}
 }
 
-void coordinate_sytems_app::process(GLFWwindow* window, State& state) {
+void demo::process(GLFWwindow* window, State& state) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
 	}
 	state.camera_controls->update(*window, *state.camera);
 
 	if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS) {
-		state.scene = {};
-		state.scene.add(gltf::import("models/antique_camera/antique_camera.glb"));
-		state.scene.add(gltf::import("models/cube/cube.gltf"));
+		state.scene = std::make_shared<Scene>();
+		state.scene->add(gltf::import("models/antique_camera/antique_camera.glb"));
+		state.scene->add(gltf::import("models/cube/cube.gltf"));
 	}
 }
 
-void coordinate_sytems_app::render(GLFWwindow* window, State& state) {
-	state.renderer.render(state.scene, *state.camera);
+void demo::render(GLFWwindow* window, State& state) {
+	assert(state.scene_gpu_data && state.scene); // make sure scene and scene data are not null
+	state.renderer.render(*state.scene, *state.camera, *state.scene_gpu_data);
 }

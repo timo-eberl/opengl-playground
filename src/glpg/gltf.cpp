@@ -66,7 +66,7 @@ static bool is_primitive_valid(cgltf_primitive &primitive, cgltf_node *node, std
 	return unsupported.size() == 0;
 }
 
-static void add_mesh_from_node(cgltf_node *node, meshes::Mesh &out_mesh, std::vector<std::string> &unsupported) {
+static void add_mesh_from_node(cgltf_node *node, Mesh &out_mesh, std::vector<std::string> &unsupported) {
 	for (size_t i = 0; i < node->mesh->primitives_count; i++) {
 		auto primitive = node->mesh->primitives[i];
 
@@ -79,7 +79,7 @@ static void add_mesh_from_node(cgltf_node *node, meshes::Mesh &out_mesh, std::ve
 			continue;
 		}
 
-		auto geometry_data = glpg::meshes::GeometryData();
+		auto geometry = glpg::Geometry();
 
 		// load index data from storage buffer into geometry data
 		switch (primitive.indices->component_type) {
@@ -90,14 +90,14 @@ static void add_mesh_from_node(cgltf_node *node, meshes::Mesh &out_mesh, std::ve
 					primitive.indices, indices_buffer, sizeof(uint16_t), primitive.indices->count
 				);
 				// insert into geometry data -> automatically convert to uint32_t
-				geometry_data.indices.reserve(primitive.indices->count);
-				for (const auto & index : indices_buffer) { geometry_data.indices.push_back(index); }
+				geometry.indices.reserve(primitive.indices->count);
+				for (const auto & index : indices_buffer) { geometry.indices.push_back(index); }
 			} break;
 			case cgltf_component_type_r_32u: { // unsigned int / uint32_t
-				geometry_data.indices.resize(primitive.indices->count);
+				geometry.indices.resize(primitive.indices->count);
 				// directly copy the indices data into the vector
 				cgltf_accessor_unpack_indices(
-					primitive.indices, geometry_data.indices.data(), sizeof(uint32_t), primitive.indices->count
+					primitive.indices, geometry.indices.data(), sizeof(uint32_t), primitive.indices->count
 				);
 			} break;
 		}
@@ -114,25 +114,25 @@ static void add_mesh_from_node(cgltf_node *node, meshes::Mesh &out_mesh, std::ve
 		assert(!uv_attribute || vertices_count == uv_attribute->count);
 
 		// load attribute data from storage buffer into geometry data
-		geometry_data.positions.resize(vertices_count);
+		geometry.positions.resize(vertices_count);
 		cgltf_accessor_unpack_floats(
-			pos_attribute, reinterpret_cast<float *>(geometry_data.positions.data()), 3 * vertices_count
+			pos_attribute, reinterpret_cast<float *>(geometry.positions.data()), 3 * vertices_count
 		);
 		if (normal_attribute) {
-			geometry_data.normals.resize(vertices_count);
+			geometry.normals.resize(vertices_count);
 			cgltf_accessor_unpack_floats(
-				normal_attribute, reinterpret_cast<float *>(geometry_data.normals.data()), 3 * vertices_count
+				normal_attribute, reinterpret_cast<float *>(geometry.normals.data()), 3 * vertices_count
 			);
 		}
 		if (uv_attribute) {
-			geometry_data.uvs.resize(vertices_count);
+			geometry.uvs.resize(vertices_count);
 			cgltf_accessor_unpack_floats(
-				uv_attribute, reinterpret_cast<float *>(geometry_data.uvs.data()), 2 * vertices_count
+				uv_attribute, reinterpret_cast<float *>(geometry.uvs.data()), 2 * vertices_count
 			);
 		}
 
-		out_mesh.sections.push_back(meshes::MeshSection(
-			std::make_shared<meshes::RenderGeometry>(std::move(geometry_data)),
+		out_mesh.sections.push_back(MeshSection(
+			std::make_shared<Geometry>(std::move(geometry)),
 			nullptr
 		));
 	}
@@ -143,9 +143,9 @@ static void add_all_meshes_from_node_recursive(cgltf_node *node, Scene &scene, s
 		auto node_world_matrix = glm::identity<glm::mat4>();
 		cgltf_node_transform_world(node, reinterpret_cast<float *>(&node_world_matrix));
 
-		auto mesh_node = std::make_shared<meshes::MeshNode>(node_world_matrix);
-		add_mesh_from_node(node, *mesh_node->get_mesh(), unsupported);
-		scene.add(mesh_node);
+		auto mesh = std::make_shared<Mesh>();
+		add_mesh_from_node(node, *mesh, unsupported);
+		scene.add(std::make_shared<MeshNode>(mesh, node_world_matrix));
 	}
 	for (size_t i = 0; i < node->children_count; i++) {
 		add_all_meshes_from_node_recursive(node->children[i], scene, unsupported);

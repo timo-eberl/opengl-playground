@@ -1,4 +1,4 @@
-#include "axes_drawer.h"
+#include "opengl_rendering.h"
 
 using namespace glpg;
 
@@ -64,7 +64,7 @@ void AxesDrawer::draw(Scene &scene) {
 
 	glUseProgram(m_shader_program.get_id());
 
-	scene.global_uniforms.apply_to_program(m_shader_program);
+	opengl_set_shader_program_uniforms(m_shader_program, scene.global_uniforms);
 
 	glBindVertexArray(m_vertex_array);
 	glLineWidth(2.0f);
