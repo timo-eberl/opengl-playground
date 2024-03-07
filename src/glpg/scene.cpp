@@ -21,6 +21,7 @@ void Scene::remove(const std::shared_ptr<MeshNode> node) {
 	auto is_equals = [node](std::shared_ptr<MeshNode> n) { return node == n; };
 	// find the node, move it to the end of the list and erase it
 	m_mesh_nodes.erase(std::remove_if(m_mesh_nodes.begin(), m_mesh_nodes.end(), is_equals), m_mesh_nodes.end());
+	for (auto &observer : m_observers) { observer->on_mesh_node_removed(node); }
 }
 
 void Scene::add_observer(ISceneObserver * observer) const {

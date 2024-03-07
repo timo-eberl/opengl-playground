@@ -2,7 +2,7 @@
 
 using namespace glpg;
 
-AxesDrawer::AxesDrawer() {
+OpenGLAxesRenderer::OpenGLAxesRenderer() {
 	if (m_vertex_array != 0) return;
 
 	static const GLint position_attrib_index = 0; // layout (location = 0)
@@ -51,7 +51,7 @@ AxesDrawer::AxesDrawer() {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-AxesDrawer::~AxesDrawer() {
+OpenGLAxesRenderer::~OpenGLAxesRenderer() {
 	glDeleteBuffers(1, &m_positions_buffer);
 	glDeleteBuffers(1, &m_indices_buffer);
 	glDeleteBuffers(1, &m_color_buffer);
@@ -59,12 +59,13 @@ AxesDrawer::~AxesDrawer() {
 	glDeleteVertexArrays(1, &m_vertex_array);
 }
 
-void AxesDrawer::draw(Scene &scene) {
+void OpenGLAxesRenderer::render(
+	const OpenGLShaderProgramGPUData &shader_program_gpu_data, const Uniforms &uniforms
+) {
 	assert(m_vertex_array != 0);
 
-	glUseProgram(m_shader_program.get_id());
-
-	opengl_set_shader_program_uniforms(m_shader_program, scene.global_uniforms);
+	glUseProgram(shader_program_gpu_data.id);
+	opengl_set_shader_program_uniforms(shader_program_gpu_data, uniforms);
 
 	glBindVertexArray(m_vertex_array);
 	glLineWidth(2.0f);

@@ -77,9 +77,9 @@ void demo::initialize(GLFWwindow* window, State& state) {
 	state.renderer.set_clear_color(glm::vec4(0.231f, 0.231f, 0.231f, 1.0f));
 
 	state.scene = std::make_shared<Scene>();
+	state.scene_gpu_data = std::make_shared<OpenGLSceneGPUData>(state.scene);
 	state.scene->add(gltf::import("models/antique_camera/antique_camera.glb"));
 	state.scene->add(gltf::import("models/cube/cube.gltf"));
-	state.scene_gpu_data = std::make_shared<OpenGLSceneGPUData>(state.scene);
 
 	state.camera = std::make_shared<PerspectiveCamera>(40.0f, 1300.0f/900.0f, 0.1f, 1000.0f);
 
@@ -110,8 +110,10 @@ void demo::process(GLFWwindow* window, State& state) {
 
 	if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS) {
 		state.scene = std::make_shared<Scene>();
+		state.scene_gpu_data = std::make_shared<OpenGLSceneGPUData>(state.scene);
 		state.scene->add(gltf::import("models/antique_camera/antique_camera.glb"));
 		state.scene->add(gltf::import("models/cube/cube.gltf"));
+		const auto cube_scene = gltf::import("models/cube/cube.gltf");
 	}
 }
 

@@ -30,18 +30,20 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera, OpenGLSceneGPUD
 
 		for (const auto & mesh_section : mesh_node->get_mesh()->sections) {
 			const auto &shader_program =
-				mesh_section.material ? *mesh_section.material->shader_program : m_default_shader_program;
+				mesh_section.material ?
+				mesh_section.material->shader_program : scene.m_default_shader_program;
 
-			glUseProgram(shader_program.get_id());
+			const auto &shader_program_gpu_data = gpu_data.get_shader_program_gpu_data(shader_program);
+			glUseProgram(shader_program_gpu_data.id);
 
 			Uniforms node_uniforms = {};
 			node_uniforms.set_mat4("model_matrix", model_matrix);
 			node_uniforms.set_mat3("normal_local_to_world_matrix", normal_local_to_world_matrix);
 
-			opengl_set_shader_program_uniforms(shader_program, node_uniforms);
-			opengl_set_shader_program_uniforms(shader_program, scene.global_uniforms);
+			opengl_set_shader_program_uniforms(shader_program_gpu_data, node_uniforms);
+			opengl_set_shader_program_uniforms(shader_program_gpu_data, scene.global_uniforms);
 			if (mesh_section.material) {
-				opengl_set_shader_program_uniforms(shader_program, mesh_section.material->uniforms);
+				opengl_set_shader_program_uniforms(shader_program_gpu_data, mesh_section.material->uniforms);
 			}
 
 			const auto &geometry_gpu_data = gpu_data.get_geometry_gpu_data(mesh_section.geometry);
@@ -56,7 +58,10 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera, OpenGLSceneGPUD
 		}
 	}
 
-	m_axes_drawer.draw(scene);
+	m_axes_drawer.render(
+		gpu_data.get_shader_program_gpu_data(scene.m_axes_shader_program),
+		scene.global_uniforms
+	);
 }
 
 void OpenGLRenderer::set_clear_color(glm::vec4 clear_color) { m_clear_color = clear_color; }

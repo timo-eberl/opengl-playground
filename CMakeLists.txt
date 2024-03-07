@@ -32,8 +32,9 @@ set(SOURCES
 	src/glpg/scene.cpp
 	src/glpg/opengl_renderer.cpp
 	src/glpg/opengl_gpu_data.cpp
-	src/glpg/opengl_axes_drawer.cpp
+	src/glpg/opengl_axes_renderer.cpp
 	src/glpg/opengl_uniforms.cpp
+	src/glpg/assets.cpp
 	src/glpg/examples/hello_triangle/hello_triangle.cpp
 	src/glpg/examples/demo/demo.cpp
 )

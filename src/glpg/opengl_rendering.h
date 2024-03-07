@@ -12,16 +12,17 @@
 
 namespace glpg {
 
-struct OpenGLShaderProgramGPUData { };
-
-struct OpenGLTextureGPUData { };
-
 struct OpenGLGeometryGPUData {
 	GLuint vertex_array = 0;
 	GLuint positions_buffer = 0;
 	GLuint normals_buffer = 0;
 	GLuint uvs_buffer = 0;
 	GLuint index_buffer = 0;
+};
+
+struct OpenGLShaderProgramGPUData {
+	GLuint id = 0;
+	bool creation_successful = false;
 };
 
 // Holds OpenGL specific data for every Geometry, ShaderProgram and Texture of an associated scene.
@@ -37,6 +38,7 @@ public:
 	bool belongs_to(const Scene &scene) const;
 
 	const OpenGLGeometryGPUData & get_geometry_gpu_data(const std::shared_ptr<Geometry> geometry);
+	const OpenGLShaderProgramGPUData & get_shader_program_gpu_data(const std::shared_ptr<ShaderProgram> shader_program);
 
 	// ISceneObserver
 	virtual void on_mesh_node_added(const std::shared_ptr<MeshNode> mesh_node) override;
@@ -44,30 +46,39 @@ public:
 private:
 	const std::weak_ptr<Scene> m_scene;
 
-	std::unordered_map<std::shared_ptr<ShaderProgram>, OpenGLShaderProgramGPUData> m_shader_programs = {};
-	std::unordered_map<std::shared_ptr<Texture>, OpenGLTextureGPUData> m_textures = {};
 	std::unordered_map<std::shared_ptr<Geometry>, OpenGLGeometryGPUData> m_geometries = {};
+	std::unordered_map<std::shared_ptr<ShaderProgram>, OpenGLShaderProgramGPUData> m_shader_programs = {};
 
 	OpenGLGeometryGPUData setup_geometry(const Geometry &geometry) const;
 	void release_geometry(OpenGLGeometryGPUData & gpu_data) const;
-
 	bool is_last_usage(
 		const std::shared_ptr<Geometry> to_be_removed_geometry,
 		const std::shared_ptr<MeshNode> to_be_removed_node
 	);
+
+	enum ShaderType { VERTEX, FRAGMENT };
+	OpenGLShaderProgramGPUData setup_shader_program(const ShaderProgram &shader_program) const;
+	GLuint compile_shader(
+		const std::string & source, ShaderType shader_type,
+		GLint *was_successful, GLchar *message, const uint message_size
+	) const;
+	void release_shader_program(OpenGLShaderProgramGPUData & gpu_data) const;
+	bool is_last_usage(
+		const std::shared_ptr<ShaderProgram> to_be_removed_shader_program,
+		const std::shared_ptr<MeshNode> to_be_removed_node
+	);
 };
 
-class AxesDrawer {
+class OpenGLAxesRenderer {
 public:
-	AxesDrawer();
-	~AxesDrawer();
+	OpenGLAxesRenderer();
+	~OpenGLAxesRenderer();
 	// forbid copying, because it would be probably not what we want
-	AxesDrawer(const AxesDrawer&) = delete;
-	AxesDrawer &operator=(const AxesDrawer&) = delete;
+	OpenGLAxesRenderer(const OpenGLAxesRenderer&) = delete;
+	OpenGLAxesRenderer &operator=(const OpenGLAxesRenderer&) = delete;
 
-	void draw(Scene &scene);
+	void render(const OpenGLShaderProgramGPUData &shader_program_gpu_data, const Uniforms &uniforms);
 private:
-	ShaderProgram m_shader_program = { "shaders/axes/shader.vert", "shaders/axes/shader.frag" };
 	GLuint m_vertex_array = 0;
 	GLuint m_indices_buffer = 0;
 	GLuint m_positions_buffer = 0;
@@ -87,10 +98,11 @@ public:
 	void clear_depth();
 private:
 	glm::vec4 m_clear_color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-	glpg::AxesDrawer m_axes_drawer = {};
-	const ShaderProgram m_default_shader_program = { "shaders/default/shader.vert", "shaders/default/shader.frag" };
+	glpg::OpenGLAxesRenderer m_axes_drawer = {};
 };
 
-void opengl_set_shader_program_uniforms(const ShaderProgram &program, const Uniforms &uniforms);
+void opengl_set_shader_program_uniforms(
+	const OpenGLShaderProgramGPUData &program_gpu_data, const Uniforms &uniforms
+);
 
 } // glpg
