@@ -12,6 +12,9 @@ namespace glpg {
 
 class Scene {
 public:
+	Scene();
+	Scene(std::shared_ptr<Material> default_mat);
+
 	Uniforms global_uniforms = {};
 	bool depth_test = true;
 
@@ -24,9 +27,7 @@ public:
 
 	void remove(const std::shared_ptr<MeshNode> node);
 
-	std::shared_ptr<ShaderProgram> default_shader_program = std::make_shared<ShaderProgram>(
-		"shaders/default/blinn_phong.vert", "shaders/default/blinn_phong.frag"
-	);
+	std::shared_ptr<Material> default_material;
 private:
 	std::vector<std::shared_ptr<MeshNode>> m_mesh_nodes = {};
 };

@@ -45,8 +45,6 @@ public:
 	WrapMode wrap_mode;
 	MinifyingFilter min_filter;
 	MagnificationFilter mag_filter;
-
-	static const std::shared_ptr<Texture> get_fallback_texture(const FallbackColor fallback_color);
 private:
 	void load();
 };

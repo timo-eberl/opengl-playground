@@ -49,9 +49,11 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
 		const auto normal_local_to_world_matrix = mesh_node->get_normal_local_to_world_matrix();
 
 		for (const auto & mesh_section : mesh_node->get_mesh()->sections) {
-			const auto &shader_program =
-				(mesh_section.material && mesh_section.material->shader_program) ?
-				mesh_section.material->shader_program : scene.default_shader_program;
+			const auto &material = mesh_section.material ?
+				mesh_section.material : scene.default_material;
+
+			const auto &shader_program = material->shader_program ?
+				material->shader_program : m_error_shader_program;
 
 			const auto &shader_program_gpu_data = get_shader_program_gpu_data(shader_program);
 			glUseProgram(shader_program_gpu_data.id);
@@ -62,9 +64,9 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
 
 			opengl_set_shader_program_uniforms(shader_program_gpu_data, node_uniforms);
 			opengl_set_shader_program_uniforms(shader_program_gpu_data, scene.global_uniforms);
-			if (mesh_section.material) {
-				opengl_set_shader_program_uniforms(shader_program_gpu_data, mesh_section.material->uniforms);
-				set_shader_program_textures(shader_program_gpu_data, mesh_section.material->textures);
+			if (material) {
+				opengl_set_shader_program_uniforms(shader_program_gpu_data, material->uniforms);
+				set_shader_program_textures(shader_program_gpu_data, material->textures);
 			}
 
 			const auto &geometry_gpu_data = get_geometry_gpu_data(mesh_section.geometry);
@@ -104,7 +106,7 @@ void OpenGLRenderer::clear_color(glm::vec4 clear_color) {
 void OpenGLRenderer::clear_depth() { glClear(GL_DEPTH_BUFFER_BIT); }
 
 void OpenGLRenderer::preload(const Scene &scene) {
-	preload(scene.default_shader_program);
+	preload(scene.default_material);
 
 	for (const auto &mesh_node : scene.get_mesh_nodes()) {
 		preload(*mesh_node);
@@ -115,13 +117,17 @@ void OpenGLRenderer::preload(const MeshNode &mesh_node) {
 	for (const auto &mesh_section : mesh_node.get_mesh()->sections) {
 		preload(mesh_section.geometry);
 		if (mesh_section.material) {
-			if (mesh_section.material->shader_program) {
-				preload(mesh_section.material->shader_program);
-			}
-			for (const auto &[name, texture] : mesh_section.material->textures) {
-				preload(texture);
-			}
+			preload(mesh_section.material);
 		}
+	}
+}
+
+void OpenGLRenderer::preload(const std::shared_ptr<Material> material) {
+	if (material->shader_program) {
+		preload(material->shader_program);
+	}
+	for (const auto &[name, texture] : material->textures) {
+		preload(texture);
 	}
 }
 

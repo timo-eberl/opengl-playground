@@ -35,29 +35,3 @@ void Texture::load() {
 		stbi_image_free(data);
 	}
 }
-
-const std::shared_ptr<Texture> Texture::get_fallback_texture(const FallbackColor fallback_color) {
-	static const std::shared_ptr<Texture> static_white_texture = std::make_shared<Texture>(
-		"textures/fallback/white.jpg", Texture::Format::RGB
-	);
-	static const std::shared_ptr<Texture> static_grey_texture = std::make_shared<Texture>(
-		"textures/fallback/grey.jpg", Texture::Format::RGB
-	);
-	static const std::shared_ptr<Texture> static_black_texture = std::make_shared<Texture>(
-		"textures/fallback/black.jpg", Texture::Format::RGB
-	);
-	static const std::shared_ptr<Texture> static_normal_texture = std::make_shared<Texture>(
-		"textures/fallback/normal.png", Texture::Format::RGBA
-	);
-	assert(static_white_texture->good());
-	assert(static_grey_texture->good());
-	assert(static_black_texture->good());
-	assert(static_normal_texture->good());
-	switch (fallback_color) {
-		case WHITE: return static_white_texture; break;
-		case GREY: return static_grey_texture; break;
-		case BLACK: return static_black_texture; break;
-		case NORMAL: return static_normal_texture; break;
-		default: assert(false); break;
-	}
-}

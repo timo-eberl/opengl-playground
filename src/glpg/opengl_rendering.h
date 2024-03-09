@@ -55,6 +55,7 @@ public:
 
 	void preload(const Scene &scene);
 	void preload(const MeshNode &mesh_node);
+	void preload(const std::shared_ptr<Material> material);
 	void preload(const std::shared_ptr<ShaderProgram> shader_program);
 	void preload(const std::shared_ptr<Geometry> geometry);
 	void preload(const std::shared_ptr<Texture> texture);

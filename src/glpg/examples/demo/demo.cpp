@@ -32,25 +32,17 @@ static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) 
 }
 
 static void create_scene(State& state) {
-	auto textured_mat = std::make_shared<glpg::Material>();
+	state.scene = {};
+
+	// copy the default material and modify it
+	auto textured_mat = std::make_shared<glpg::Material>(*state.scene.default_material);
 	textured_mat->textures["albedo_tex"]
 		= std::make_shared<glpg::Texture>("textures/container.jpg", glpg::Texture::Format::RGB);
 
-	auto white_mat = std::make_shared<glpg::Material>();
-	white_mat->textures["albedo_tex"] = glpg::Texture::get_fallback_texture(glpg::Texture::FallbackColor::WHITE);
-
-	state.scene = {};
 	state.scene.add(glpg::gltf::import("models/antique_camera/antique_camera.glb"));
 	const auto cube = glpg::gltf::import("models/cube/cube.gltf").get_mesh_nodes()[0];
 	cube->get_mesh()->sections[0].material = textured_mat;
 	state.scene.add(cube);
-
-	// set everything that has no material to a white default material
-	for (const auto &mesh_node : state.scene.get_mesh_nodes()) {
-		for (auto &section : mesh_node->get_mesh()->sections) {
-			if (!section.material) section.material = white_mat;
-		}
-	}
 
 	state.renderer.preload(state.scene);
 }
