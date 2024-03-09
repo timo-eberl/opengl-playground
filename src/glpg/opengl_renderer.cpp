@@ -64,6 +64,7 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
 			opengl_set_shader_program_uniforms(shader_program_gpu_data, scene.global_uniforms);
 			if (mesh_section.material) {
 				opengl_set_shader_program_uniforms(shader_program_gpu_data, mesh_section.material->uniforms);
+				set_shader_program_textures(shader_program_gpu_data, mesh_section.material->textures);
 			}
 
 			const auto &geometry_gpu_data = get_geometry_gpu_data(mesh_section.geometry);
@@ -74,6 +75,7 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
 
 			// unbind to avoid accidental modification
 			glBindVertexArray(0);
+			glBindTexture(GL_TEXTURE_2D, 0);
 			glUseProgram(0);
 		}
 	}
@@ -112,16 +114,14 @@ void OpenGLRenderer::preload(const Scene &scene) {
 void OpenGLRenderer::preload(const MeshNode &mesh_node) {
 	for (const auto &mesh_section : mesh_node.get_mesh()->sections) {
 		preload(mesh_section.geometry);
-		if (mesh_section.material && mesh_section.material->shader_program) {
-			preload(mesh_section.material->shader_program);
+		if (mesh_section.material) {
+			if (mesh_section.material->shader_program) {
+				preload(mesh_section.material->shader_program);
+			}
+			for (const auto &[name, texture] : mesh_section.material->textures) {
+				preload(texture);
+			}
 		}
-	}
-}
-
-void OpenGLRenderer::preload(const std::shared_ptr<Geometry> geometry) {
-	// create gpu data if it does not exist yet
-	if (!m_geometries.contains(geometry)) {
-		m_geometries.emplace(geometry, opengl_setup_geometry(*geometry));
 	}
 }
 
@@ -135,6 +135,23 @@ void OpenGLRenderer::preload(const std::shared_ptr<ShaderProgram> shader_program
 			gpu_data = m_shader_programs[m_error_shader_program];
 		}
 		m_shader_programs.emplace(shader_program, gpu_data);
+	}
+}
+
+void OpenGLRenderer::preload(const std::shared_ptr<Texture> texture) {
+	// create gpu data if it does not exist yet
+	if (!m_textures.contains(texture)) {
+		auto gpu_data = opengl_setup_texture(*texture);
+		if (gpu_data.id != 0) {
+			m_textures.emplace(texture, gpu_data);
+		}
+	}
+}
+
+void OpenGLRenderer::preload(const std::shared_ptr<Geometry> geometry) {
+	// create gpu data if it does not exist yet
+	if (!m_geometries.contains(geometry)) {
+		m_geometries.emplace(geometry, opengl_setup_geometry(*geometry));
 	}
 }
 
@@ -165,4 +182,35 @@ const OpenGLGeometryGPUData & OpenGLRenderer::get_geometry_gpu_data(
 		preload(geometry);
 	}
 	return m_geometries[geometry];
+}
+
+const OpenGLTextureGPUData & OpenGLRenderer::get_texture_gpu_data(
+	const std::shared_ptr<Texture> texture
+) {
+	if (!m_textures.contains(texture)) {
+		log::warn(
+			std::string("GPU Data of Texture ") + texture->asset_path + " not found."
+			+ " Consider preloading before rendering."
+		);
+		preload(texture);
+	}
+	return m_textures[texture];
+}
+
+void OpenGLRenderer::set_shader_program_textures(
+	const OpenGLShaderProgramGPUData &program_gpu_data,
+	const std::map<std::string, std::shared_ptr<Texture>> &textures
+) {
+	uint texture_unit_offset = 0;
+	for (const auto &[name, texture] : textures) {
+		auto &gpu_data = get_texture_gpu_data(texture);
+		if (gpu_data.id == 0) {
+			continue;
+		}
+		auto location = glGetUniformLocation(program_gpu_data.id, name.c_str());
+		glUniform1i(location, texture_unit_offset);
+		glActiveTexture(GL_TEXTURE0 + texture_unit_offset);
+		glBindTexture(GL_TEXTURE_2D, gpu_data.id);
+		texture_unit_offset++;
+	}
 }

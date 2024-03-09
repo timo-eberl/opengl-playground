@@ -1,7 +1,8 @@
 #pragma once
 
-// include glfw after glad
-#include <GLFW/glfw3.h>
+
+#include <glad/glad.h>
+#include <GLFW/glfw3.h> // include glfw after glad
 
 #include "glpg/shader_program.h"
 #include "glpg/uniforms.h"

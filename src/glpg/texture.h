@@ -1,47 +1,54 @@
 #pragma once
 
-#include <glad/glad.h>
-// include glfw after glad
-#include <GLFW/glfw3.h>
-
 #include <string>
+#include <memory>
 
 namespace glpg {
 
 class Texture {
 public:
+	enum FallbackColor { WHITE, GREY, BLACK, NORMAL };
+	enum Format {
+		RED, RG, RGB, BGR, RGBA, BGRA, RED_INTEGER, RG_INTEGER, RGB_INTEGER, BGR_INTEGER,
+		RGBA_INTEGER, BGRA_INTEGER, STENCIL_INDEX, DEPTH_COMPONENT, DEPTH_STENCIL
+	};
+	enum WrapMode { CLAMP_TO_EDGE, CLAMP_TO_BORDER, MIRRORED_REPEAT, REPEAT, MIRROR_CLAMP_TO_EDGE };
+	enum MinifyingFilter {
+		NEAREST, LINEAR, NEAREST_MIPMAP_NEAREST, LINEAR_MIPMAP_NEAREST, NEAREST_MIPMAP_LINEAR,
+		LINEAR_MIPMAP_LINEAR
+	};
+	enum MagnificationFilter { MAG_NEAREST, MAG_LINEAR };
+
 	Texture(
-		const std::string& path, // e.g. "textures/tex.png"
-		const GLint internal_format, // e.g. "GL_RGBA"
-		const GLint wrap_mode = GL_REPEAT,
-		const GLint min_filter = GL_LINEAR_MIPMAP_LINEAR,
-		const GLint max_filter = GL_LINEAR
+		const std::string& asset_path, // e.g. "textures/tex.png"
+		const Format format,
+		const WrapMode wrap_mode = REPEAT,
+		const MinifyingFilter min_filter = LINEAR_MIPMAP_LINEAR,
+		const MagnificationFilter mag_filter = MAG_LINEAR
 	);
 	~Texture();
-	// forbid copying, because it would be incredibly expensive!
+	// forbid copying, because it is unclear if the texture data would be copied over
+	// or read again from the file
 	Texture(const Texture&) = delete;
 	Texture &operator=(const Texture&) = delete;
 
-	// move semantics
-	Texture(Texture &&other);
-	Texture& operator=(Texture &&other);
-
 	bool good() const; // true if texture is valid
-	void reload();
-	GLuint get_id() const;
+	void reload_from_file();
 
+	int width = 0;
+	int height = 0;
+	int n_channels = 0;
+	unsigned char* data = nullptr;
+
+	const std::string asset_path;
+	Format format;
+	WrapMode wrap_mode;
+	MinifyingFilter min_filter;
+	MagnificationFilter mag_filter;
+
+	static const std::shared_ptr<Texture> get_fallback_texture(const FallbackColor fallback_color);
 private:
-	inline static uint s_texture_units_used = 0; // will go up with textures used
-
-	std::string m_path;
-	GLuint m_id;
-	GLint m_internal_format;
-	GLint m_wrap_mode;
-	GLint m_min_filter;
-	GLint m_max_filter;
-
 	void load();
-	void release();
 };
 
 } // glpg

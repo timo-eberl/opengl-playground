@@ -14,8 +14,6 @@ namespace glpg {
 
 // holds uniform data and has some convenience methods for setting them
 struct Uniforms {
-	void set_texture(const std::string& name, const std::weak_ptr<glpg::Texture> t);
-
 	void set_float1(const std::string& name, const float v);
 	void set_float1(const std::string& name, const glm::vec1 v);
 	void set_float2(const std::string& name, const glm::vec2);
@@ -44,8 +42,6 @@ struct Uniforms {
 	void set_mat4x2(const std::string& name, const glm::mat4x2 v);
 	void set_mat3x4(const std::string& name, const glm::mat3x4 v);
 	void set_mat4x3(const std::string& name, const glm::mat4x3 v);
-
-	std::map<const std::string, std::weak_ptr<glpg::Texture>> textures;
 
 	std::map<const std::string, glm::vec1> float1;
 	std::map<const std::string, glm::vec2> float2;

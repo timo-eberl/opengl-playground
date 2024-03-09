@@ -8,6 +8,7 @@
 namespace glpg {
 
 struct Material {
+	std::map<std::string, std::shared_ptr<Texture>> textures = {};
 	Uniforms uniforms = {};
 	std::shared_ptr<ShaderProgram> shader_program = {};
 };

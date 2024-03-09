@@ -10,10 +10,8 @@ public:
 		const std::string& vertex_shader_path, const std::string& fragment_shader_path
 	);
 
-	std::string vertex_source = "";
-	std::string fragment_source = "";
-
-	void reload_from_file();
+	const std::string vertex_source = "";
+	const std::string fragment_source = "";
 
 	const std::string vertex_shader_path;
 	const std::string fragment_shader_path;

@@ -4,7 +4,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "glpg/shader_program.h"
 #include "glpg/gltf.h"
 
 #include "demo.h"
@@ -32,13 +31,34 @@ static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) 
 	}
 }
 
-static void initialize(GLFWwindow* window, State& state) {
-	state.renderer.set_clear_color(glm::vec4(0.231f, 0.231f, 0.231f, 1.0f));
+static void create_scene(State& state) {
+	auto textured_mat = std::make_shared<glpg::Material>();
+	textured_mat->textures["albedo_tex"]
+		= std::make_shared<glpg::Texture>("textures/container.jpg", glpg::Texture::Format::RGB);
+
+	auto white_mat = std::make_shared<glpg::Material>();
+	white_mat->textures["albedo_tex"] = glpg::Texture::get_fallback_texture(glpg::Texture::FallbackColor::WHITE);
 
 	state.scene = {};
 	state.scene.add(glpg::gltf::import("models/antique_camera/antique_camera.glb"));
-	state.scene.add(glpg::gltf::import("models/cube/cube.gltf"));
+	const auto cube = glpg::gltf::import("models/cube/cube.gltf").get_mesh_nodes()[0];
+	cube->get_mesh()->sections[0].material = textured_mat;
+	state.scene.add(cube);
+
+	// set everything that has no material to a white default material
+	for (const auto &mesh_node : state.scene.get_mesh_nodes()) {
+		for (auto &section : mesh_node->get_mesh()->sections) {
+			if (!section.material) section.material = white_mat;
+		}
+	}
+
 	state.renderer.preload(state.scene);
+}
+
+static void initialize(GLFWwindow* window, State& state) {
+	state.renderer.set_clear_color(glm::vec4(0.231f, 0.231f, 0.231f, 1.0f));
+
+	create_scene(state);
 
 	state.camera = std::make_shared<glpg::PerspectiveCamera>(40.0f, 1300.0f/900.0f, 0.1f, 1000.0f);
 
@@ -56,10 +76,7 @@ static void process(GLFWwindow* window, State& state) {
 	state.camera_controls->update(*window, *state.camera);
 
 	if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS) {
-		state.scene = {};
-		state.scene.add(glpg::gltf::import("models/antique_camera/antique_camera.glb"));
-		state.scene.add(glpg::gltf::import("models/cube/cube.gltf"));
-		state.renderer.preload(state.scene);
+		create_scene(state);
 	}
 }
 

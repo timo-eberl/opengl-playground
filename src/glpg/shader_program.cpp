@@ -8,10 +8,7 @@ ShaderProgram::ShaderProgram(
 	const std::string& vertex_shader_path, const std::string& fragment_shader_path
 )
 	: vertex_shader_path(vertex_shader_path),
-	fragment_shader_path(fragment_shader_path)
-{ reload_from_file(); }
-
-void ShaderProgram::reload_from_file() {
-	vertex_source = assets::read_text_file(vertex_shader_path);
-	fragment_source = assets::read_text_file(fragment_shader_path);
-}
+	fragment_shader_path(fragment_shader_path),
+	vertex_source(assets::read_text_file(vertex_shader_path)),
+	fragment_source(assets::read_text_file(fragment_shader_path))
+{}

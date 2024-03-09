@@ -2,22 +2,11 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+using namespace glpg;
+
 void glpg::opengl_set_shader_program_uniforms(
 	const OpenGLShaderProgramGPUData &program_gpu_data, const Uniforms &uniforms
 ) {
-	uint texture_unit_offset = 0;
-	for (const auto& [key, value] : uniforms.textures) {
-		if (auto sp_tex = value.lock()) {
-			if (!sp_tex->good()) {
-				continue;
-			}
-			auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
-			glUniform1i(location, texture_unit_offset);
-			glActiveTexture(GL_TEXTURE0 + texture_unit_offset);
-			glBindTexture(GL_TEXTURE_2D, sp_tex->get_id());
-			texture_unit_offset++;
-		}
-	}
 	for (const auto& [key, value] : uniforms.float1) {
 		auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
 		glUniform1f(location, value[0]);

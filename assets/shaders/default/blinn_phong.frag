@@ -8,6 +8,7 @@ out vec4 frag_color;
 
 uniform vec3 camera_world_position;
 uniform vec3 directional_light_world_direction;
+uniform sampler2D albedo_tex;
 
 void main() {
 	vec3 normal = normalize(world_normal);
@@ -24,12 +25,12 @@ void main() {
 	float specular_lighting = clamp( dot(half_vector, normal), 0,1 );
 	specular_lighting = pow(specular_lighting, (1.0 - roughness) * 100.0);
 
-	float albedo = 1.0;
+	vec3 albedo = texture(albedo_tex, uv).rgb;
 	float specular_strength = 0.1;
 	float directional_light_intensity = 0.75;
 
 	frag_color = vec4(vec3(
-		mix(diffuse_lighting * albedo, specular_lighting, specular_strength)
-		* directional_light_intensity + ambient_lighting * albedo
+		mix(diffuse_lighting * albedo, vec3(specular_lighting), specular_strength)
+		* directional_light_intensity + vec3(ambient_lighting * albedo)
 	), 1.0);
 }

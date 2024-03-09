@@ -31,8 +31,9 @@ set(SOURCES
 	src/glpg/mesh_node.cpp
 	src/glpg/scene.cpp
 	src/glpg/opengl_renderer.cpp
-	src/glpg/opengl_geometry_gpu_data.cpp
-	src/glpg/opengl_shader_program_gpu_data.cpp
+	src/glpg/opengl_shader_program.cpp
+	src/glpg/opengl_geometry.cpp
+	src/glpg/opengl_texture.cpp
 	src/glpg/opengl_axes_renderer.cpp
 	src/glpg/opengl_uniforms.cpp
 	src/glpg/assets.cpp

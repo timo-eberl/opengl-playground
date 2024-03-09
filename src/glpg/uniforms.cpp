@@ -2,9 +2,6 @@
 
 using glpg::Uniforms;
 
-void Uniforms::set_texture(const std::string& name, const std::weak_ptr<glpg::Texture> t) {
-	textures[name] = t;
-}
 void Uniforms::set_float1(const std::string& name, const float v) {
 	set_float1(name, glm::vec1(v));
 }

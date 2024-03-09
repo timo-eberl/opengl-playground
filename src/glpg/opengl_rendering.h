@@ -25,6 +25,10 @@ struct OpenGLShaderProgramGPUData {
 	bool creation_successful = false;
 };
 
+struct OpenGLTextureGPUData {
+	GLuint id = 0;
+};
+
 class OpenGLAxesRenderer {
 public:
 	OpenGLAxesRenderer();
@@ -51,8 +55,9 @@ public:
 
 	void preload(const Scene &scene);
 	void preload(const MeshNode &mesh_node);
-	void preload(const std::shared_ptr<Geometry> geometry);
 	void preload(const std::shared_ptr<ShaderProgram> shader_program);
+	void preload(const std::shared_ptr<Geometry> geometry);
+	void preload(const std::shared_ptr<Texture> texture);
 
 	void render(Scene &scene, const ICamera &camera);
 
@@ -69,18 +74,28 @@ private:
 	// OpenGL specific data
 	std::unordered_map<std::shared_ptr<ShaderProgram>, OpenGLShaderProgramGPUData> m_shader_programs = {};
 	std::unordered_map<std::shared_ptr<Geometry>, OpenGLGeometryGPUData> m_geometries = {};
+	std::unordered_map<std::shared_ptr<Texture>, OpenGLTextureGPUData> m_textures = {};
 
 	const OpenGLShaderProgramGPUData & get_shader_program_gpu_data(
 		const std::shared_ptr<ShaderProgram> shader_program
 	);
 	const OpenGLGeometryGPUData & get_geometry_gpu_data(const std::shared_ptr<Geometry> geometry);
+	const OpenGLTextureGPUData & get_texture_gpu_data(const std::shared_ptr<Texture> texture);
+
+	void set_shader_program_textures(
+		const OpenGLShaderProgramGPUData &program_gpu_data,
+		const std::map<std::string, std::shared_ptr<Texture>> &textures
+	);
 };
 
 OpenGLGeometryGPUData opengl_setup_geometry(const Geometry &geometry);
-void opengl_release_geometry(OpenGLGeometryGPUData & gpu_data);
+void opengl_release_geometry(OpenGLGeometryGPUData &gpu_data);
 
 OpenGLShaderProgramGPUData opengl_setup_shader_program(const ShaderProgram &shader_program);
-void opengl_release_shader_program(OpenGLShaderProgramGPUData & gpu_data);
+void opengl_release_shader_program(OpenGLShaderProgramGPUData &gpu_data);
+
+OpenGLTextureGPUData opengl_setup_texture(const Texture &texture);
+void opengl_release_texture(OpenGLTextureGPUData &gpu_data);
 
 void opengl_set_shader_program_uniforms(
 	const OpenGLShaderProgramGPUData &program_gpu_data, const Uniforms &uniforms
