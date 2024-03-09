@@ -17,15 +17,8 @@ int run();
 struct State {
 	std::shared_ptr<PerspectiveCamera> camera;
 	std::unique_ptr<CameraViewportControls> camera_controls;
-	std::shared_ptr<Scene> scene;
+	Scene scene;
 	OpenGLRenderer renderer;
-	std::shared_ptr<OpenGLSceneGPUData> scene_gpu_data;
 };
-
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void process(GLFWwindow* window, State& state);
-void render(GLFWwindow* window, State& state);
-void initialize(GLFWwindow* window, State& state);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 } // glpg::demo

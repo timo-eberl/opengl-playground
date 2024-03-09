@@ -6,9 +6,29 @@
 
 using namespace glpg;
 
-void OpenGLRenderer::render(Scene &scene, const ICamera &camera, OpenGLSceneGPUData &gpu_data) {
-	if (!gpu_data.belongs_to(scene)) { log::error("SceneGPUData does not match scene!"); }
+OpenGLRenderer::OpenGLRenderer() {
+	static const std::shared_ptr<ShaderProgram> static_error_shader_program = std::make_shared<ShaderProgram>(
+		"shaders/default/error.vert", "shaders/default/error.frag"
+	);
+	m_error_shader_program = static_error_shader_program;
+	if (!m_shader_programs.contains(m_error_shader_program)) {
+		auto error_shader_program_gpu_data = opengl_setup_shader_program(*m_error_shader_program);
+		assert(error_shader_program_gpu_data.creation_successful);
+		m_shader_programs.emplace(m_error_shader_program, error_shader_program_gpu_data);
+	}
 
+	static const std::shared_ptr<ShaderProgram> static_axes_shader_program = std::make_shared<ShaderProgram>(
+		"shaders/default/axes.vert", "shaders/default/axes.frag"
+	);
+	m_axes_shader_program = static_axes_shader_program;
+	if (!m_shader_programs.contains(static_axes_shader_program)) {
+		auto axes_shader_program_gpu_data = opengl_setup_shader_program(*static_axes_shader_program);
+		assert(axes_shader_program_gpu_data.creation_successful);
+		m_shader_programs.emplace(static_axes_shader_program, axes_shader_program_gpu_data);
+	}
+}
+
+void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
 	if (scene.depth_test) glEnable(GL_DEPTH_TEST);
 	if (auto_clear) clear();
 
@@ -30,10 +50,10 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera, OpenGLSceneGPUD
 
 		for (const auto & mesh_section : mesh_node->get_mesh()->sections) {
 			const auto &shader_program =
-				mesh_section.material ?
-				mesh_section.material->shader_program : scene.m_default_shader_program;
+				(mesh_section.material && mesh_section.material->shader_program) ?
+				mesh_section.material->shader_program : scene.default_shader_program;
 
-			const auto &shader_program_gpu_data = gpu_data.get_shader_program_gpu_data(shader_program);
+			const auto &shader_program_gpu_data = get_shader_program_gpu_data(shader_program);
 			glUseProgram(shader_program_gpu_data.id);
 
 			Uniforms node_uniforms = {};
@@ -46,7 +66,7 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera, OpenGLSceneGPUD
 				opengl_set_shader_program_uniforms(shader_program_gpu_data, mesh_section.material->uniforms);
 			}
 
-			const auto &geometry_gpu_data = gpu_data.get_geometry_gpu_data(mesh_section.geometry);
+			const auto &geometry_gpu_data = get_geometry_gpu_data(mesh_section.geometry);
 			assert(geometry_gpu_data.vertex_array != 0);
 
 			glBindVertexArray(geometry_gpu_data.vertex_array);
@@ -58,10 +78,11 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera, OpenGLSceneGPUD
 		}
 	}
 
-	m_axes_drawer.render(
-		gpu_data.get_shader_program_gpu_data(scene.m_axes_shader_program),
-		scene.global_uniforms
-	);
+	if (render_axes) {
+		m_axes_renderer.render(
+			get_shader_program_gpu_data(m_axes_shader_program), scene.global_uniforms
+		);
+	}
 }
 
 void OpenGLRenderer::set_clear_color(glm::vec4 clear_color) { m_clear_color = clear_color; }
@@ -79,3 +100,69 @@ void OpenGLRenderer::clear_color(glm::vec4 clear_color) {
 }
 
 void OpenGLRenderer::clear_depth() { glClear(GL_DEPTH_BUFFER_BIT); }
+
+void OpenGLRenderer::preload(const Scene &scene) {
+	preload(scene.default_shader_program);
+
+	for (const auto &mesh_node : scene.get_mesh_nodes()) {
+		preload(*mesh_node);
+	}
+}
+
+void OpenGLRenderer::preload(const MeshNode &mesh_node) {
+	for (const auto &mesh_section : mesh_node.get_mesh()->sections) {
+		preload(mesh_section.geometry);
+		if (mesh_section.material && mesh_section.material->shader_program) {
+			preload(mesh_section.material->shader_program);
+		}
+	}
+}
+
+void OpenGLRenderer::preload(const std::shared_ptr<Geometry> geometry) {
+	// create gpu data if it does not exist yet
+	if (!m_geometries.contains(geometry)) {
+		m_geometries.emplace(geometry, opengl_setup_geometry(*geometry));
+	}
+}
+
+void OpenGLRenderer::preload(const std::shared_ptr<ShaderProgram> shader_program) {
+	// create gpu data if it does not exist yet
+	if (!m_shader_programs.contains(shader_program)) {
+		auto gpu_data = opengl_setup_shader_program(*shader_program);
+		if (!gpu_data.creation_successful) {
+			log::error("Shader creation failed. Replacing with error shader.", false);
+
+			gpu_data = m_shader_programs[m_error_shader_program];
+		}
+		m_shader_programs.emplace(shader_program, gpu_data);
+	}
+}
+
+const OpenGLShaderProgramGPUData & OpenGLRenderer::get_shader_program_gpu_data(
+	const std::shared_ptr<ShaderProgram> shader_program
+) {
+	// create shader program if it does not exist yet
+	if (!m_shader_programs.contains(shader_program)) {
+		log::warn(
+			std::string("GPU Data of ShaderProgram ")
+			+ shader_program->vertex_shader_path + ", "
+			+ shader_program->fragment_shader_path + "not found."
+			+ " Consider preloading before rendering."
+		);
+		preload(shader_program);
+	}
+	return m_shader_programs[shader_program];
+}
+
+const OpenGLGeometryGPUData & OpenGLRenderer::get_geometry_gpu_data(
+	const std::shared_ptr<Geometry> geometry
+) {
+	if (!m_geometries.contains(geometry)) {
+		log::warn(
+			"GPU Data of Geometry not found."
+			" Consider preloading before rendering."
+		);
+		preload(geometry);
+	}
+	return m_geometries[geometry];
+}
