@@ -64,12 +64,11 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
 			node_uniforms["normal_local_to_world_matrix"]
 				= make_uniform(normal_local_to_world_matrix);
 
-			opengl_set_shader_program_uniforms(shader_program_gpu_data, node_uniforms);
 			opengl_set_shader_program_uniforms(shader_program_gpu_data, scene.global_uniforms);
 			if (material) {
 				opengl_set_shader_program_uniforms(shader_program_gpu_data, material->uniforms);
-				set_shader_program_textures(shader_program_gpu_data, material->textures);
 			}
+			opengl_set_shader_program_uniforms(shader_program_gpu_data, node_uniforms);
 
 			const auto &geometry_gpu_data = get_geometry_gpu_data(mesh_section.geometry);
 			assert(geometry_gpu_data.vertex_array != 0);
@@ -85,9 +84,13 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
 	}
 
 	if (render_axes) {
-		m_axes_renderer.render(
-			get_shader_program_gpu_data(m_axes_shader_program), scene.global_uniforms
-		);
+		const OpenGLShaderProgramGPUData &shader_program_gpu_data
+			= get_shader_program_gpu_data(m_axes_shader_program);
+
+		glUseProgram(shader_program_gpu_data.id);
+		opengl_set_shader_program_uniforms(shader_program_gpu_data, scene.global_uniforms);
+
+		m_axes_renderer.render();
 	}
 }
 
@@ -128,8 +131,13 @@ void OpenGLRenderer::preload(const std::shared_ptr<Material> material) {
 	if (material->shader_program) {
 		preload(material->shader_program);
 	}
-	for (const auto &[name, texture] : material->textures) {
-		preload(texture);
+	for (const auto &[name, uniform] : material->uniforms) {
+		if (uniform->get_type() == UniformType::TEXTURE) {
+			const auto &texture = *reinterpret_cast<const std::shared_ptr<Texture> *>(
+				uniform->value_ptr()
+			);
+			preload(texture);
+		}
 	}
 }
 
@@ -205,20 +213,117 @@ const OpenGLTextureGPUData & OpenGLRenderer::get_texture_gpu_data(
 	return m_textures[texture];
 }
 
-void OpenGLRenderer::set_shader_program_textures(
-	const OpenGLShaderProgramGPUData &program_gpu_data,
-	const std::map<std::string, std::shared_ptr<Texture>> &textures
+void OpenGLRenderer::opengl_set_shader_program_uniforms(
+	const OpenGLShaderProgramGPUData &program_gpu_data, const Uniforms &uniforms
 ) {
-	uint texture_unit_offset = 0;
-	for (const auto &[name, texture] : textures) {
-		auto &gpu_data = get_texture_gpu_data(texture);
-		if (gpu_data.id == 0) {
-			continue;
-		}
+	uint texture_unit_offset = 0; // texture count
+
+	for (const auto &[name, uniform] : uniforms) {
 		auto location = glGetUniformLocation(program_gpu_data.id, name.c_str());
-		glUniform1i(location, texture_unit_offset);
-		glActiveTexture(GL_TEXTURE0 + texture_unit_offset);
-		glBindTexture(GL_TEXTURE_2D, gpu_data.id);
-		texture_unit_offset++;
+		switch (uniform->get_type()) {
+			case TEXTURE: {
+				const auto &texture = *reinterpret_cast<const std::shared_ptr<Texture> *>(
+					uniform->value_ptr()
+				);
+				auto &texture_gpu_data = get_texture_gpu_data(texture);
+				if (texture_gpu_data.id == 0) {
+					continue; // don't bind if the texture is invalid
+				}
+				glUniform1i(location, texture_unit_offset);
+				glActiveTexture(GL_TEXTURE0 + texture_unit_offset);
+				glBindTexture(GL_TEXTURE_2D, texture_gpu_data.id);
+				texture_unit_offset++;
+			} break;
+			case FLOAT1: {
+				const auto &value = *reinterpret_cast<const glm::vec1 *>(uniform->value_ptr());
+				glUniform1f(location, value[0]);
+			} break;
+			case FLOAT2: {
+				const auto &value = *reinterpret_cast<const glm::vec2 *>(uniform->value_ptr());
+				glUniform2f(location, value[0], value[1]);
+			} break;
+			case FLOAT3: {
+				const auto &value = *reinterpret_cast<const glm::vec3 *>(uniform->value_ptr());
+				glUniform3f(location, value[0], value[1], value[2]);
+			} break;
+			case FLOAT4: {
+				const auto &value = *reinterpret_cast<const glm::vec4 *>(uniform->value_ptr());
+				glUniform4f(location, value[0], value[1], value[2], value[3]);
+			} break;
+
+			case INT1: {
+				const auto &value = *reinterpret_cast<const glm::ivec1 *>(uniform->value_ptr());
+				glUniform1i(location, value[0]);
+			} break;
+			case INT2: {
+				const auto &value = *reinterpret_cast<const glm::ivec2 *>(uniform->value_ptr());
+				glUniform2i(location, value[0], value[1]);
+			} break;
+			case INT3: {
+				const auto &value = *reinterpret_cast<const glm::ivec3 *>(uniform->value_ptr());
+				glUniform3i(location, value[0], value[1], value[2]);
+			} break;
+			case INT4: {
+				const auto &value = *reinterpret_cast<const glm::ivec4 *>(uniform->value_ptr());
+				glUniform4i(location, value[0], value[1], value[2], value[3]);
+			} break;
+
+			case UINT1: {
+				const auto &value = *reinterpret_cast<const glm::uvec1 *>(uniform->value_ptr());
+				glUniform1ui(location, value[0]);
+			} break;
+			case UINT2: {
+				const auto &value = *reinterpret_cast<const glm::uvec2 *>(uniform->value_ptr());
+				glUniform2ui(location, value[0], value[1]);
+			} break;
+			case UINT3: {
+				const auto &value = *reinterpret_cast<const glm::uvec3 *>(uniform->value_ptr());
+				glUniform3ui(location, value[0], value[1], value[2]);
+			} break;
+			case UINT4: {
+				const auto &value = *reinterpret_cast<const glm::uvec4 *>(uniform->value_ptr());
+				glUniform4ui(location, value[0], value[1], value[2], value[3]);
+			} break;
+
+			case MAT2: {
+				const auto &value = *reinterpret_cast<const glm::mat2 *>(uniform->value_ptr());
+				glUniformMatrix2fv(location, 1, false, glm::value_ptr(value));
+			} break;
+			case MAT3: {
+				const auto &value = *reinterpret_cast<const glm::mat3 *>(uniform->value_ptr());
+				glUniformMatrix3fv(location, 1, false, glm::value_ptr(value));
+			} break;
+			case MAT4: {
+				const auto &value = *reinterpret_cast<const glm::mat4 *>(uniform->value_ptr());
+				glUniformMatrix4fv(location, 1, false, glm::value_ptr(value));
+			} break;
+
+			case MAT2X3: {
+				const auto &value = *reinterpret_cast<const glm::mat2x3 *>(uniform->value_ptr());
+				glUniformMatrix2x3fv(location, 1, false, glm::value_ptr(value));
+			} break;
+			case MAT3X2: {
+				const auto &value = *reinterpret_cast<const glm::mat3x2 *>(uniform->value_ptr());
+				glUniformMatrix3x2fv(location, 1, false, glm::value_ptr(value));
+			} break;
+			case MAT2X4: {
+				const auto &value = *reinterpret_cast<const glm::mat2x4 *>(uniform->value_ptr());
+				glUniformMatrix2x4fv(location, 1, false, glm::value_ptr(value));
+			} break;
+			case MAT4X2: {
+				const auto &value = *reinterpret_cast<const glm::mat4x2 *>(uniform->value_ptr());
+				glUniformMatrix4x2fv(location, 1, false, glm::value_ptr(value));
+			} break;
+			case MAT3X4: {
+				const auto &value = *reinterpret_cast<const glm::mat3x4 *>(uniform->value_ptr());
+				glUniformMatrix3x4fv(location, 1, false, glm::value_ptr(value));
+			} break;
+			case MAT4X3: {
+				const auto &value = *reinterpret_cast<const glm::mat4x3 *>(uniform->value_ptr());
+				glUniformMatrix4x3fv(location, 1, false, glm::value_ptr(value));
+			} break;
+
+			default: assert(false); break;
+		}
 	}
 }

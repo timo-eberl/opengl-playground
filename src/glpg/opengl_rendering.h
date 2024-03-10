@@ -37,9 +37,7 @@ public:
 	OpenGLAxesRenderer(const OpenGLAxesRenderer&) = delete;
 	OpenGLAxesRenderer &operator=(const OpenGLAxesRenderer&) = delete;
 
-	void render(
-		const OpenGLShaderProgramGPUData &shader_program_gpu_data, const Uniforms &uniforms
-	);
+	void render();
 private:
 	GLuint m_vertex_array = 0;
 	GLuint m_indices_buffer = 0;
@@ -85,9 +83,8 @@ private:
 	const OpenGLGeometryGPUData & get_geometry_gpu_data(const std::shared_ptr<Geometry> geometry);
 	const OpenGLTextureGPUData & get_texture_gpu_data(const std::shared_ptr<Texture> texture);
 
-	void set_shader_program_textures(
-		const OpenGLShaderProgramGPUData &program_gpu_data,
-		const std::map<std::string, std::shared_ptr<Texture>> &textures
+	void opengl_set_shader_program_uniforms(
+		const OpenGLShaderProgramGPUData &program_gpu_data, const Uniforms &uniforms
 	);
 };
 
@@ -99,9 +96,5 @@ void opengl_release_shader_program(OpenGLShaderProgramGPUData &gpu_data);
 
 OpenGLTextureGPUData opengl_setup_texture(const Texture &texture);
 void opengl_release_texture(OpenGLTextureGPUData &gpu_data);
-
-void opengl_set_shader_program_uniforms(
-	const OpenGLShaderProgramGPUData &program_gpu_data, const Uniforms &uniforms
-);
 
 } // glpg

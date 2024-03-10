@@ -1,7 +1,5 @@
 #include "texture.h"
 
-#include <cassert>
-
 #include <stb_image.h>
 
 #include "log.h"

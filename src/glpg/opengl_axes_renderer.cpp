@@ -59,13 +59,8 @@ OpenGLAxesRenderer::~OpenGLAxesRenderer() {
 	glDeleteVertexArrays(1, &m_vertex_array);
 }
 
-void OpenGLAxesRenderer::render(
-	const OpenGLShaderProgramGPUData &shader_program_gpu_data, const Uniforms &uniforms
-) {
+void OpenGLAxesRenderer::render() {
 	assert(m_vertex_array != 0);
-
-	glUseProgram(shader_program_gpu_data.id);
-	opengl_set_shader_program_uniforms(shader_program_gpu_data, uniforms);
 
 	glBindVertexArray(m_vertex_array);
 	glLineWidth(2.0f);

@@ -8,8 +8,9 @@ Scene::Scene() : default_material(std::make_shared<Material>()) {
 	default_material->shader_program = std::make_shared<glpg::ShaderProgram>(
 		"shaders/default/blinn_phong.vert", "shaders/default/blinn_phong.frag"
 	);
-	default_material->textures["albedo_tex"] =
-		std::make_shared<Texture>("textures/fallback/white.jpg", Texture::Format::RGB);
+	default_material->uniforms["albedo_tex"] = glpg::make_uniform(
+		std::make_shared<Texture>("textures/fallback/white.jpg", Texture::Format::RGB)
+	);
 }
 
 Scene::Scene(std::shared_ptr<Material> default_mat) : default_material(default_mat) {}

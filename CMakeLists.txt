@@ -35,7 +35,6 @@ set(SOURCES
 	src/glpg/opengl_geometry.cpp
 	src/glpg/opengl_texture.cpp
 	src/glpg/opengl_axes_renderer.cpp
-	src/glpg/opengl_uniforms.cpp
 	src/glpg/assets.cpp
 	src/glpg/examples/hello_triangle/hello_triangle.cpp
 	src/glpg/examples/demo/demo.cpp
