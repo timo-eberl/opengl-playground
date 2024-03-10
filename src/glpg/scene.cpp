@@ -32,3 +32,32 @@ void Scene::remove(const std::shared_ptr<MeshNode> node) {
 	// find the node, move it to the end of the list and erase it
 	m_mesh_nodes.erase(std::remove_if(m_mesh_nodes.begin(), m_mesh_nodes.end(), is_equals), m_mesh_nodes.end());
 }
+
+void Scene::reload_all_shaders() {
+	default_material->shader_program->reload_from_file();
+
+	for (const auto &mesh_node : m_mesh_nodes) {
+		for (const auto &mesh_section : mesh_node->get_mesh()->sections) {
+			if (mesh_section.material && mesh_section.material->shader_program) {
+				mesh_section.material->shader_program->reload_from_file();
+			}
+		}
+	}
+}
+
+void Scene::reload_all_textures() {
+	for (const auto &mesh_node : m_mesh_nodes) {
+		for (const auto &mesh_section : mesh_node->get_mesh()->sections) {
+			if (mesh_section.material) {
+				for (const auto &[name, uniform] : mesh_section.material->uniforms) {
+					if (uniform->get_type() == glpg::TEXTURE) {
+						const auto &texture = *reinterpret_cast<const std::shared_ptr<Texture> *>(
+							uniform->value_ptr()
+						);
+						texture->reload_from_file();
+					}
+				}
+			}
+		}
+	}
+}

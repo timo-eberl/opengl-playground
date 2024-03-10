@@ -33,6 +33,7 @@ public:
 	Texture &operator=(const Texture&) = delete;
 
 	bool good() const; // true if texture is valid
+	unsigned int get_update_count() const;
 	void reload_from_file();
 
 	int width = 0;
@@ -46,6 +47,8 @@ public:
 	MinifyingFilter min_filter;
 	MagnificationFilter mag_filter;
 private:
+	unsigned int m_update_count = 0;
+
 	void load();
 };
 

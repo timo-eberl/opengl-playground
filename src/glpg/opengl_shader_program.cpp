@@ -28,7 +28,7 @@ OpenGLShaderProgramGPUData glpg::opengl_setup_shader_program(const ShaderProgram
 
 	GLint vertex_compilation_success = false;
 	auto vertex_shader = compile_shader(
-		shader_program.vertex_source.c_str(), GL_VERTEX_SHADER,
+		shader_program.get_vertex_shader_source().c_str(), GL_VERTEX_SHADER,
 		&vertex_compilation_success, message, message_size
 	);
 	if (!vertex_compilation_success) {
@@ -41,7 +41,7 @@ OpenGLShaderProgramGPUData glpg::opengl_setup_shader_program(const ShaderProgram
 
 	GLint fragment_compilation_success = false;
 	auto fragment_shader = compile_shader(
-		shader_program.fragment_source.c_str(), GL_FRAGMENT_SHADER,
+		shader_program.get_fragment_shader_source().c_str(), GL_FRAGMENT_SHADER,
 		&fragment_compilation_success, message, message_size
 	);
 	if (!fragment_compilation_success) {
@@ -85,7 +85,7 @@ OpenGLShaderProgramGPUData glpg::opengl_setup_shader_program(const ShaderProgram
 		return {};
 	}
 
-	return { program_id, true };
+	return { program_id, 0 };
 }
 
 void glpg::opengl_release_shader_program(OpenGLShaderProgramGPUData & gpu_data) {

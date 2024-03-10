@@ -69,6 +69,7 @@ OpenGLTextureGPUData glpg::opengl_setup_texture(const Texture &texture) {
 	// unbind buffer to avoid accidental modification
 	glBindTexture(GL_TEXTURE_2D, 0);
 
+	gpu_data.last_update_count = texture.get_update_count();
 	return gpu_data;
 }
 

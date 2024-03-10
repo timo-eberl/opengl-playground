@@ -22,11 +22,12 @@ struct OpenGLGeometryGPUData {
 
 struct OpenGLShaderProgramGPUData {
 	GLuint id = 0;
-	bool creation_successful = false;
+	unsigned int last_update_count = 0;
 };
 
 struct OpenGLTextureGPUData {
 	GLuint id = 0;
+	unsigned int last_update_count = 0;
 };
 
 class OpenGLAxesRenderer {

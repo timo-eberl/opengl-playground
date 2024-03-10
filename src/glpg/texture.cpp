@@ -22,7 +22,9 @@ Texture::~Texture() { stbi_image_free(data); }
 
 bool Texture::good() const { return data; }
 
-void Texture::reload_from_file() { stbi_image_free(data); load(); }
+unsigned int Texture::get_update_count() const { return m_update_count; }
+
+void Texture::reload_from_file() { stbi_image_free(data); load(); m_update_count++; }
 
 void Texture::load() {
 	stbi_set_flip_vertically_on_load(true);

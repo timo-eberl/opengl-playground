@@ -13,7 +13,7 @@ OpenGLRenderer::OpenGLRenderer() {
 	m_error_shader_program = static_error_shader_program;
 	if (!m_shader_programs.contains(m_error_shader_program)) {
 		auto error_shader_program_gpu_data = opengl_setup_shader_program(*m_error_shader_program);
-		assert(error_shader_program_gpu_data.creation_successful);
+		assert(error_shader_program_gpu_data.id != 0);
 		m_shader_programs.emplace(m_error_shader_program, error_shader_program_gpu_data);
 	}
 
@@ -23,7 +23,7 @@ OpenGLRenderer::OpenGLRenderer() {
 	m_axes_shader_program = static_axes_shader_program;
 	if (!m_shader_programs.contains(static_axes_shader_program)) {
 		auto axes_shader_program_gpu_data = opengl_setup_shader_program(*static_axes_shader_program);
-		assert(axes_shader_program_gpu_data.creation_successful);
+		assert(axes_shader_program_gpu_data.id != 0);
 		m_shader_programs.emplace(static_axes_shader_program, axes_shader_program_gpu_data);
 	}
 }
@@ -56,7 +56,11 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
 			const auto &shader_program = material->shader_program ?
 				material->shader_program : m_error_shader_program;
 
-			const auto &shader_program_gpu_data = get_shader_program_gpu_data(shader_program);
+			const auto &shader_program_gpu_data = get_shader_program_gpu_data(shader_program).id != 0
+				? get_shader_program_gpu_data(shader_program)
+				// if the program is invalid, use the error shader program
+				: get_shader_program_gpu_data(m_error_shader_program);
+
 			glUseProgram(shader_program_gpu_data.id);
 
 			Uniforms node_uniforms = {};
@@ -145,11 +149,6 @@ void OpenGLRenderer::preload(const std::shared_ptr<ShaderProgram> shader_program
 	// create gpu data if it does not exist yet
 	if (!m_shader_programs.contains(shader_program)) {
 		auto gpu_data = opengl_setup_shader_program(*shader_program);
-		if (!gpu_data.creation_successful) {
-			log::error("Shader creation failed. Replacing with error shader.", false);
-
-			gpu_data = m_shader_programs[m_error_shader_program];
-		}
 		m_shader_programs.emplace(shader_program, gpu_data);
 	}
 }
@@ -184,6 +183,15 @@ const OpenGLShaderProgramGPUData & OpenGLRenderer::get_shader_program_gpu_data(
 		);
 		preload(shader_program);
 	}
+	else {
+		// check if the shader program was updated, if so, send to gpu again
+		auto &gpu_data = m_shader_programs[shader_program];
+		if (shader_program->get_update_count() > gpu_data.last_update_count) {
+			opengl_release_shader_program(gpu_data);
+			m_shader_programs.erase(shader_program);
+			preload(shader_program);
+		}
+	}
 	return m_shader_programs[shader_program];
 }
 
@@ -209,6 +217,15 @@ const OpenGLTextureGPUData & OpenGLRenderer::get_texture_gpu_data(
 			+ " Consider preloading before rendering."
 		);
 		preload(texture);
+	}
+	else {
+		// check if the texture was updated, if so, send to gpu again
+		auto &gpu_data = m_textures[texture];
+		if (texture->get_update_count() > gpu_data.last_update_count) {
+			opengl_release_texture(gpu_data);
+			m_textures.erase(texture);
+			preload(texture);
+		}
 	}
 	return m_textures[texture];
 }

@@ -27,6 +27,9 @@ public:
 
 	void remove(const std::shared_ptr<MeshNode> node);
 
+	void reload_all_shaders();
+	void reload_all_textures();
+
 	std::shared_ptr<Material> default_material;
 private:
 	std::vector<std::shared_ptr<MeshNode>> m_mesh_nodes = {};
