@@ -7,92 +7,99 @@ using namespace glpg;
 void glpg::opengl_set_shader_program_uniforms(
 	const OpenGLShaderProgramGPUData &program_gpu_data, const Uniforms &uniforms
 ) {
-	for (const auto& [key, value] : uniforms.float1) {
-		auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
-		glUniform1f(location, value[0]);
-	}
-	for (const auto& [key, value] : uniforms.float2) {
-		auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
-		glUniform2f(location, value[0], value[1]);
-	}
-	for (const auto& [key, value] : uniforms.float3) {
-		auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
-		glUniform3f(location, value[0], value[1], value[2]);
-	}
-	for (const auto& [key, value] : uniforms.float4) {
-		auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
-		glUniform4f(location, value[0], value[1], value[2], value[3]);
-	}
+	for (const auto &[name, uniform] : uniforms) {
+		auto location = glGetUniformLocation(program_gpu_data.id, name.c_str());
+		switch (uniform->get_type()) {
+			case FLOAT1: {
+				const auto &value = *reinterpret_cast<const glm::vec1 *>(uniform->value_ptr());
+				glUniform1f(location, value[0]);
+			} break;
+			case FLOAT2: {
+				const auto &value = *reinterpret_cast<const glm::vec2 *>(uniform->value_ptr());
+				glUniform2f(location, value[0], value[1]);
+			} break;
+			case FLOAT3: {
+				const auto &value = *reinterpret_cast<const glm::vec3 *>(uniform->value_ptr());
+				glUniform3f(location, value[0], value[1], value[2]);
+			} break;
 
-	for (const auto& [key, value] : uniforms.int1) {
-		auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
-		glUniform1i(location, value[0]);
-	}
-	for (const auto& [key, value] : uniforms.int2) {
-		auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
-		glUniform2i(location, value[0], value[1]);
-	}
-	for (const auto& [key, value] : uniforms.int3) {
-		auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
-		glUniform3i(location, value[0], value[1], value[2]);
-	}
-	for (const auto& [key, value] : uniforms.int4) {
-		auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
-		glUniform4i(location, value[0], value[1], value[2], value[3]);
-	}
+			case FLOAT4: {
+				const auto &value = *reinterpret_cast<const glm::vec4 *>(uniform->value_ptr());
+				glUniform4f(location, value[0], value[1], value[2], value[3]);
+			} break;
+			case INT1: {
+				const auto &value = *reinterpret_cast<const glm::ivec1 *>(uniform->value_ptr());
+				glUniform1i(location, value[0]);
+			} break;
+			case INT2: {
+				const auto &value = *reinterpret_cast<const glm::ivec2 *>(uniform->value_ptr());
+				glUniform2i(location, value[0], value[1]);
+			} break;
+			case INT3: {
+				const auto &value = *reinterpret_cast<const glm::ivec3 *>(uniform->value_ptr());
+				glUniform3i(location, value[0], value[1], value[2]);
+			} break;
+			case INT4: {
+				const auto &value = *reinterpret_cast<const glm::ivec4 *>(uniform->value_ptr());
+				glUniform4i(location, value[0], value[1], value[2], value[3]);
+			} break;
 
-	for (const auto& [key, value] : uniforms.uint1) {
-		auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
-		glUniform1ui(location, value[0]);
-	}
-	for (const auto& [key, value] : uniforms.uint2) {
-		auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
-		glUniform2ui(location, value[0], value[1]);
-	}
-	for (const auto& [key, value] : uniforms.uint3) {
-		auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
-		glUniform3ui(location, value[0], value[1], value[2]);
-	}
-	for (const auto& [key, value] : uniforms.uint4) {
-		auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
-		glUniform4ui(location, value[0], value[1], value[2], value[3]);
-	}
+			case UINT1: {
+				const auto &value = *reinterpret_cast<const glm::uvec1 *>(uniform->value_ptr());
+				glUniform1ui(location, value[0]);
+			} break;
+			case UINT2: {
+				const auto &value = *reinterpret_cast<const glm::uvec2 *>(uniform->value_ptr());
+				glUniform2ui(location, value[0], value[1]);
+			} break;
+			case UINT3: {
+				const auto &value = *reinterpret_cast<const glm::uvec3 *>(uniform->value_ptr());
+				glUniform3ui(location, value[0], value[1], value[2]);
+			} break;
+			case UINT4: {
+				const auto &value = *reinterpret_cast<const glm::uvec4 *>(uniform->value_ptr());
+				glUniform4ui(location, value[0], value[1], value[2], value[3]);
+			} break;
 
-	for (const auto& [key, value] : uniforms.mat2) {
-		auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
-		glUniformMatrix2fv(location, 1, false, glm::value_ptr(value));
-	}
-	for (const auto& [key, value] : uniforms.mat3) {
-		auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
-		glUniformMatrix3fv(location, 1, false, glm::value_ptr(value));
-	}
-	for (const auto& [key, value] : uniforms.mat4) {
-		auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
-		glUniformMatrix4fv(location, 1, false, glm::value_ptr(value));
-	}
+			case MAT2: {
+				const auto &value = *reinterpret_cast<const glm::mat2 *>(uniform->value_ptr());
+				glUniformMatrix2fv(location, 1, false, glm::value_ptr(value));
+			} break;
+			case MAT3: {
+				const auto &value = *reinterpret_cast<const glm::mat3 *>(uniform->value_ptr());
+				glUniformMatrix3fv(location, 1, false, glm::value_ptr(value));
+			} break;
+			case MAT4: {
+				const auto &value = *reinterpret_cast<const glm::mat4 *>(uniform->value_ptr());
+				glUniformMatrix4fv(location, 1, false, glm::value_ptr(value));
+			} break;
 
-	for (const auto& [key, value] : uniforms.mat2x3) {
-		auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
-		glUniformMatrix2x3fv(location, 1, false, glm::value_ptr(value));
-	}
-	for (const auto& [key, value] : uniforms.mat3x2) {
-		auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
-		glUniformMatrix3x2fv(location, 1, false, glm::value_ptr(value));
-	}
-	for (const auto& [key, value] : uniforms.mat2x4) {
-		auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
-		glUniformMatrix2x4fv(location, 1, false, glm::value_ptr(value));
-	}
-	for (const auto& [key, value] : uniforms.mat4x2) {
-		auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
-		glUniformMatrix4x2fv(location, 1, false, glm::value_ptr(value));
-	}
-	for (const auto& [key, value] : uniforms.mat3x4) {
-		auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
-		glUniformMatrix3x4fv(location, 1, false, glm::value_ptr(value));
-	}
-	for (const auto& [key, value] : uniforms.mat4x3) {
-		auto location = glGetUniformLocation(program_gpu_data.id, key.c_str());
-		glUniformMatrix4x3fv(location, 1, false, glm::value_ptr(value));
+			case MAT2X3: {
+				const auto &value = *reinterpret_cast<const glm::mat2x3 *>(uniform->value_ptr());
+				glUniformMatrix2x3fv(location, 1, false, glm::value_ptr(value));
+			} break;
+			case MAT3X2: {
+				const auto &value = *reinterpret_cast<const glm::mat3x2 *>(uniform->value_ptr());
+				glUniformMatrix3x2fv(location, 1, false, glm::value_ptr(value));
+			} break;
+			case MAT2X4: {
+				const auto &value = *reinterpret_cast<const glm::mat2x4 *>(uniform->value_ptr());
+				glUniformMatrix2x4fv(location, 1, false, glm::value_ptr(value));
+			} break;
+			case MAT4X2: {
+				const auto &value = *reinterpret_cast<const glm::mat4x2 *>(uniform->value_ptr());
+				glUniformMatrix4x2fv(location, 1, false, glm::value_ptr(value));
+			} break;
+			case MAT3X4: {
+				const auto &value = *reinterpret_cast<const glm::mat3x4 *>(uniform->value_ptr());
+				glUniformMatrix3x4fv(location, 1, false, glm::value_ptr(value));
+			} break;
+			case MAT4X3: {
+				const auto &value = *reinterpret_cast<const glm::mat4x3 *>(uniform->value_ptr());
+				glUniformMatrix4x3fv(location, 1, false, glm::value_ptr(value));
+			} break;
+
+			default: assert(false); break;
+		}
 	}
 }

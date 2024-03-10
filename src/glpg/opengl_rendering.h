@@ -37,7 +37,9 @@ public:
 	OpenGLAxesRenderer(const OpenGLAxesRenderer&) = delete;
 	OpenGLAxesRenderer &operator=(const OpenGLAxesRenderer&) = delete;
 
-	void render(const OpenGLShaderProgramGPUData &shader_program_gpu_data, const Uniforms &uniforms);
+	void render(
+		const OpenGLShaderProgramGPUData &shader_program_gpu_data, const Uniforms &uniforms
+	);
 private:
 	GLuint m_vertex_array = 0;
 	GLuint m_indices_buffer = 0;

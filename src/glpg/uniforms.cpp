@@ -1,38 +1,71 @@
 #include "uniforms.h"
 
-using glpg::Uniforms;
+using namespace glpg;
 
-void Uniforms::set_float1(const std::string& name, const float v) {
-	set_float1(name, glm::vec1(v));
+std::shared_ptr<IUniform> glpg::make_uniform(glm::vec1 value) {
+	return std::make_shared<Float1Uniform>(value);
 }
-void Uniforms::set_float1(const std::string& name, const glm::vec1 v) { float1[name] = v; }
-void Uniforms::set_float2(const std::string& name, const glm::vec2 v) { float2[name] = v; }
-void Uniforms::set_float3(const std::string& name, const glm::vec3 v) { float3[name] = v; }
-void Uniforms::set_float4(const std::string& name, const glm::vec4 v) { float4[name] = v; }
-
-void Uniforms::set_int1(const std::string& name, const int v) {
-	set_int1(name, glm::ivec1(v));
+std::shared_ptr<IUniform> glpg::make_uniform(glm::vec2 value) {
+	return std::make_shared<Float2Uniform>(value);
 }
-void Uniforms::set_int1(const std::string& name, const glm::ivec1 v) { int1[name] = v; }
-void Uniforms::set_int2(const std::string& name, const glm::ivec2 v) { int2[name] = v; }
-void Uniforms::set_int3(const std::string& name, const glm::ivec3 v) { int3[name] = v; }
-void Uniforms::set_int4(const std::string& name, const glm::ivec4 v) { int4[name] = v; }
-
-void Uniforms::set_uint1(const std::string& name, const unsigned int v) {
-	set_uint1(name, glm::uvec1(v));
+std::shared_ptr<IUniform> glpg::make_uniform(glm::vec3 value) {
+	return std::make_shared<Float3Uniform>(value);
 }
-void Uniforms::set_uint1(const std::string& name, const glm::uvec1 v) { uint1[name] = v; }
-void Uniforms::set_uint2(const std::string& name, const glm::uvec2 v) { uint2[name] = v; }
-void Uniforms::set_uint3(const std::string& name, const glm::uvec3 v) { uint3[name] = v; }
-void Uniforms::set_uint4(const std::string& name, const glm::uvec4 v) { uint4[name] = v; }
+std::shared_ptr<IUniform> glpg::make_uniform(glm::vec4 value) {
+	return std::make_shared<Float4Uniform>(value);
+}
 
-void Uniforms::set_mat2(const std::string& name, const glm::mat2 v) { mat2[name] = v; }
-void Uniforms::set_mat3(const std::string& name, const glm::mat3 v) { mat3[name] = v; }
-void Uniforms::set_mat4(const std::string& name, const glm::mat4 v) { mat4[name] = v; }
+std::shared_ptr<IUniform> glpg::make_uniform(glm::ivec1 value) {
+	return std::make_shared<Int1Uniform>(value);
+}
+std::shared_ptr<IUniform> glpg::make_uniform(glm::ivec2 value) {
+	return std::make_shared<Int2Uniform>(value);
+}
+std::shared_ptr<IUniform> glpg::make_uniform(glm::ivec3 value) {
+	return std::make_shared<Int3Uniform>(value);
+}
+std::shared_ptr<IUniform> glpg::make_uniform(glm::ivec4 value) {
+	return std::make_shared<Int4Uniform>(value);
+}
 
-void Uniforms::set_mat2x3(const std::string& name, const glm::mat2x3 v) { mat2x3[name] = v; }
-void Uniforms::set_mat3x2(const std::string& name, const glm::mat3x2 v) { mat3x2[name] = v; }
-void Uniforms::set_mat2x4(const std::string& name, const glm::mat2x4 v) { mat2x4[name] = v; }
-void Uniforms::set_mat4x2(const std::string& name, const glm::mat4x2 v) { mat4x2[name] = v; }
-void Uniforms::set_mat3x4(const std::string& name, const glm::mat3x4 v) { mat3x4[name] = v; }
-void Uniforms::set_mat4x3(const std::string& name, const glm::mat4x3 v) { mat4x3[name] = v; }
+std::shared_ptr<IUniform> glpg::make_uniform(glm::uvec1 value) {
+	return std::make_shared<UInt1Uniform>(value);
+}
+std::shared_ptr<IUniform> glpg::make_uniform(glm::uvec2 value) {
+	return std::make_shared<UInt2Uniform>(value);
+}
+std::shared_ptr<IUniform> glpg::make_uniform(glm::uvec3 value) {
+	return std::make_shared<UInt3Uniform>(value);
+}
+std::shared_ptr<IUniform> glpg::make_uniform(glm::uvec4 value) {
+	return std::make_shared<UInt4Uniform>(value);
+}
+
+std::shared_ptr<IUniform> glpg::make_uniform(glm::mat2 value) {
+	return std::make_shared<Mat2Uniform>(value);
+}
+std::shared_ptr<IUniform> glpg::make_uniform(glm::mat3 value) {
+	return std::make_shared<Mat3Uniform>(value);
+}
+std::shared_ptr<IUniform> glpg::make_uniform(glm::mat4 value) {
+	return std::make_shared<Mat4Uniform>(value);
+}
+
+std::shared_ptr<IUniform> glpg::make_uniform(glm::mat2x3 value) {
+	return std::make_shared<Mat2x3Uniform>(value);
+}
+std::shared_ptr<IUniform> glpg::make_uniform(glm::mat3x2 value) {
+	return std::make_shared<Mat3x2Uniform>(value);
+}
+std::shared_ptr<IUniform> glpg::make_uniform(glm::mat2x4 value) {
+	return std::make_shared<Mat2x4Uniform>(value);
+}
+std::shared_ptr<IUniform> glpg::make_uniform(glm::mat4x2 value) {
+	return std::make_shared<Mat4x2Uniform>(value);
+}
+std::shared_ptr<IUniform> glpg::make_uniform(glm::mat3x4 value) {
+	return std::make_shared<Mat3x4Uniform>(value);
+}
+std::shared_ptr<IUniform> glpg::make_uniform(glm::mat4x3 value) {
+	return std::make_shared<Mat4x3Uniform>(value);
+}

@@ -38,11 +38,12 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
 	const auto view_projection_matrix = projection_matrix * view_matrix;
 	const auto directional_light_world_direction = glm::normalize(glm::vec3(4.1f, 5.9f, -1.0f));
 
-	scene.global_uniforms.set_mat4("view_matrix", view_matrix);
-	scene.global_uniforms.set_mat4("projection_matrix", projection_matrix);
-	scene.global_uniforms.set_mat4("view_projection_matrix", view_projection_matrix);
-	scene.global_uniforms.set_float3("camera_world_position", camera_world_position);
-	scene.global_uniforms.set_float3("directional_light_world_direction", directional_light_world_direction);
+	scene.global_uniforms["view_matrix"] = make_uniform(view_matrix);
+	scene.global_uniforms["projection_matrix"] = make_uniform(projection_matrix);
+	scene.global_uniforms["view_projection_matrix"] = make_uniform(view_projection_matrix);
+	scene.global_uniforms["camera_world_position"] = make_uniform(camera_world_position);
+	scene.global_uniforms["directional_light_world_direction"]
+		= make_uniform(directional_light_world_direction);
 
 	for (const auto & mesh_node : scene.get_mesh_nodes()) {
 		const auto model_matrix = mesh_node->get_model_matrix();
@@ -59,8 +60,9 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
 			glUseProgram(shader_program_gpu_data.id);
 
 			Uniforms node_uniforms = {};
-			node_uniforms.set_mat4("model_matrix", model_matrix);
-			node_uniforms.set_mat3("normal_local_to_world_matrix", normal_local_to_world_matrix);
+			node_uniforms["model_matrix"] = make_uniform(model_matrix);
+			node_uniforms["normal_local_to_world_matrix"]
+				= make_uniform(normal_local_to_world_matrix);
 
 			opengl_set_shader_program_uniforms(shader_program_gpu_data, node_uniforms);
 			opengl_set_shader_program_uniforms(shader_program_gpu_data, scene.global_uniforms);
