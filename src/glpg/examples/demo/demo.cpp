@@ -1,5 +1,6 @@
 #include <iostream>
 #include <chrono>
+#include <sstream>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -94,7 +95,7 @@ int glpg::demo::run() {
 		return -1;
 	}
 	glfwMakeContextCurrent(window);
-	// glfwSwapInterval(0); // request to disable vsync
+	glfwSwapInterval(0); // request to disable vsync
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		std::cout << "Failed to initialize GLAD" << std::endl;
@@ -109,19 +110,32 @@ int glpg::demo::run() {
 		initialize(window, state);
 
 		auto last_frame_time_point = std::chrono::high_resolution_clock::now();
+		auto frame_counter = 0;
+		auto last_fps_update = std::chrono::high_resolution_clock::now();
 
 		while (!glfwWindowShouldClose(window)) {
 			process(window, state);
-
 			render(window, state);
 
 			// profiling
-			auto now = std::chrono::high_resolution_clock::now();
-			auto delta = now - last_frame_time_point;
+			using namespace std::chrono_literals;
+			const auto now = std::chrono::high_resolution_clock::now();
+			const auto delta = now - last_frame_time_point;
 			last_frame_time_point = now;
-			auto fps = 1.0 / (delta.count() * 1.0E-9);
-			// don't forget to disable vsync!
-			// std::cout << "fps: " << fps << ", delta: " << delta << std::endl;
+
+			// FPS in window title
+			frame_counter++;
+			const auto time_since_last_fps_update = now - last_fps_update;
+			static const auto fps_updates_per_second = 5.0; // if set to high, application crashes
+			if (time_since_last_fps_update > 1s / fps_updates_per_second) {
+				const auto fps = frame_counter * fps_updates_per_second;
+				std::stringstream title_stream;
+				title_stream << "OpenGL Playground | FPS: " << fps;
+				glfwSetWindowTitle(window,  + title_stream.str().c_str());
+
+				frame_counter = 0;
+				last_fps_update = now;
+			}
 
 			glfwSwapBuffers(window);
 			glfwPollEvents();
