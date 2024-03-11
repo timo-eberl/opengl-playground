@@ -11,55 +11,20 @@
 using glpg::Texture;
 
 Texture::Texture(
-	const std::string& asset_path, const Format format, const bool flip,
-	const WrapMode wrap_mode, const MinifyingFilter min_filter, const MagnificationFilter mag_filter
-)
-	: has_file(true), asset_path(asset_path), name(asset_path), format(format), m_flip(flip),
-	wrap_mode(wrap_mode), min_filter(min_filter), mag_filter(mag_filter)
+	const std::string& asset_path,
+	const MetaData meta_data, const SampleData sample_data
+) : has_file(true), asset_path(asset_path), name(asset_path),
+	meta_data(meta_data), sample_data(sample_data)
 {
 	load_from_file();
 }
 
 Texture::Texture(
-	const ImageData p_image_data, const std::string& p_name, const Format format,
-	const WrapMode wrap_mode, const MinifyingFilter min_filter, const MagnificationFilter mag_filter
-)
-	: image_data(p_image_data), has_file(false), asset_path(""), name(p_name), format(format),
-	wrap_mode(wrap_mode), min_filter(min_filter), mag_filter(mag_filter)
+	const ImageData image_data, const std::string& name,
+	const MetaData meta_data, const SampleData sample_data
+) : has_file(false), asset_path(""), name(name),
+	image_data(image_data), meta_data(meta_data), sample_data(sample_data)
 {}
-
-Texture::Texture(
-	const std::string& asset_path, const bool flip, const WrapMode wrap_mode,
-	const MinifyingFilter min_filter, const MagnificationFilter mag_filter
-)
-	: has_file(true), asset_path(asset_path), name(asset_path), m_flip(flip),
-	wrap_mode(wrap_mode), min_filter(min_filter), mag_filter(mag_filter)
-{
-	load_from_file();
-	switch (image_data.n_channels) {
-		case 1: format = Format::RED; break;
-		case 2: format = Format::RG; break;
-		case 3: format = Format::RGB; break;
-		case 4: format = Format::RGBA; break;
-		default: assert(false); break;
-	}
-}
-
-Texture::Texture(
-	const ImageData p_image_data, const std::string& p_name,
-	const WrapMode wrap_mode, const MinifyingFilter min_filter, const MagnificationFilter mag_filter
-)
-	: image_data(p_image_data), has_file(false), asset_path(""), name(p_name),
-	wrap_mode(wrap_mode), min_filter(min_filter), mag_filter(mag_filter)
-{
-	switch (image_data.n_channels) {
-		case 1: format = Format::RED; break;
-		case 2: format = Format::RG; break;
-		case 3: format = Format::RGB; break;
-		case 4: format = Format::RGBA; break;
-		default: assert(false); break;
-	}
-}
 
 Texture::ImageData Texture::image_data_from_memory(
 	const unsigned char *memory, const int len, const bool flip
@@ -94,7 +59,7 @@ void Texture::reload_from_file() {
 }
 
 void Texture::load_from_file() {
-	stbi_set_flip_vertically_on_load(m_flip);
+	stbi_set_flip_vertically_on_load(meta_data.flip_y);
 	const std::string absolute_path = ASSETS_DIR + asset_path;
 	image_data.data_ptr = stbi_load(
 		absolute_path.c_str(), &image_data.width, &image_data.height, &image_data.n_channels, 0

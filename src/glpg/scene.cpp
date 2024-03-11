@@ -9,14 +9,16 @@ Scene::Scene() : default_material(std::make_shared<Material>()) {
 		"shaders/default/blinn_phong.vert", "shaders/default/blinn_phong.frag"
 	);
 	default_material->uniforms["albedo_tex"] = glpg::make_uniform(
-		std::make_shared<Texture>("textures/fallback/white.jpg", Texture::Format::RGB)
+		std::make_shared<Texture>("textures/fallback/white.jpg")
 	);
-	default_material->uniforms["normal_tex"] = glpg::make_uniform(
-		std::make_shared<Texture>("textures/fallback/normal.png", Texture::Format::RGB)
-	);
-	default_material->uniforms["metallic_roughness_tex"] = glpg::make_uniform(
-		std::make_shared<Texture>("textures/fallback/white.jpg", Texture::Format::RGB)
-	);
+	default_material->uniforms["normal_tex"] = glpg::make_uniform(std::make_shared<Texture>(
+		"textures/fallback/normal.png",
+		Texture::MetaData(Texture::Channels::RGBA, Texture::ColorSpace::NON_COLOR, true)
+	));
+	default_material->uniforms["metallic_roughness_tex"] = glpg::make_uniform(std::make_shared<Texture>(
+		"textures/fallback/white.jpg",
+		Texture::MetaData(Texture::Channels::RGB, Texture::ColorSpace::NON_COLOR, true)
+	));
 	default_material->uniforms["albedo_color"] = make_uniform(glm::vec4(1.0, 1.0, 1.0, 1.0));
 	default_material->uniforms["metallic_factor"] = make_uniform(glm::vec1(0.0));
 	default_material->uniforms["roughness_factor"] = make_uniform(glm::vec1(0.5));

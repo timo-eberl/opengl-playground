@@ -68,7 +68,7 @@ static bool is_primitive_valid(cgltf_primitive &primitive, cgltf_node *node, std
 
 static std::shared_ptr<Texture> create_texture(
 	const cgltf_texture_view &gltf_texture_view, std::vector<std::string> &unsupported,
-	const std::string &gltf_path
+	const std::string &gltf_path, bool srgb = true
 ) {
 	assert(!gltf_texture_view.has_transform);
 	assert(gltf_texture_view.texcoord == 0);
@@ -83,7 +83,12 @@ static std::shared_ptr<Texture> create_texture(
 
 		return std::make_shared<Texture>(
 			image_data,
-			image->name
+			image->name,
+			Texture::MetaData(
+				Texture::Channels::AUTOMATIC,
+				srgb ? Texture::ColorSpace::SRGB : Texture::ColorSpace::NON_COLOR,
+				false
+			)
 		);
 	}
 	else {
@@ -91,7 +96,11 @@ static std::shared_ptr<Texture> create_texture(
 		const auto after_last_slash = path_contains_slash ? (gltf_path.find_last_of('/') + 1) : 0;
 		const auto gltf_location = gltf_path.substr(0, after_last_slash);
 		const auto asset_path = gltf_location + image->uri;
-		const auto texture = std::make_shared<Texture>(asset_path, false);
+		const auto texture = std::make_shared<Texture>(asset_path, Texture::MetaData(
+			Texture::Channels::AUTOMATIC,
+			srgb ? Texture::ColorSpace::SRGB : Texture::ColorSpace::NON_COLOR,
+			false
+		));
 		const auto n_channels = texture->image_data.n_channels;
 
 		return texture;
@@ -115,12 +124,14 @@ static std::shared_ptr<Material> create_material(
 
 	const auto &normal_tex = gltf_material->normal_texture;
 	if (normal_tex.texture) {
-		const auto texture = create_texture(normal_tex, unsupported, gltf_path);
+		const auto texture = create_texture(normal_tex, unsupported, gltf_path, false);
 		material->uniforms["normal_tex"] = make_uniform(texture);
 	}
 	else {
-		static const auto fallback_normal
-			= std::make_shared<Texture>("textures/fallback/normal.png", Texture::Format::RGB);
+		static const auto fallback_normal = std::make_shared<Texture>(
+			"textures/fallback/normal.png",
+			Texture::MetaData(Texture::Channels::RGBA, Texture::ColorSpace::NON_COLOR, true)
+		);
 		material->uniforms["normal_tex"] = glpg::make_uniform(fallback_normal);
 	}
 
@@ -135,7 +146,7 @@ static std::shared_ptr<Material> create_material(
 	}
 	else {
 		static const auto fallback_albedo
-			= std::make_shared<Texture>("textures/fallback/white.jpg", Texture::Format::RGB);
+			= std::make_shared<Texture>("textures/fallback/white.jpg");
 		material->uniforms["albedo_tex"] = glpg::make_uniform(fallback_albedo);
 	}
 
@@ -145,12 +156,14 @@ static std::shared_ptr<Material> create_material(
 	material->uniforms["roughness_factor"] = make_uniform(glm::vec1(roughness_factor));
 	const auto &metallic_roughness_tex = gltf_material->pbr_metallic_roughness.metallic_roughness_texture;
 	if (metallic_roughness_tex.texture) {
-		const auto texture = create_texture(metallic_roughness_tex, unsupported, gltf_path);
+		const auto texture = create_texture(metallic_roughness_tex, unsupported, gltf_path, false);
 		material->uniforms["metallic_roughness_tex"] = make_uniform(texture);
 	}
 	else {
-		static const auto fallback_metallic_roughness
-			= std::make_shared<Texture>("textures/fallback/white.jpg", Texture::Format::RGB);
+		static const auto fallback_metallic_roughness = std::make_shared<Texture>(
+			"textures/fallback/white.jpg",
+			Texture::MetaData(Texture::Channels::RGB, Texture::ColorSpace::NON_COLOR, true)
+		);
 		material->uniforms["metallic_roughness_tex"]
 			= glpg::make_uniform(fallback_metallic_roughness);
 	}

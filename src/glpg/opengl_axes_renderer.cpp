@@ -62,6 +62,8 @@ OpenGLAxesRenderer::~OpenGLAxesRenderer() {
 void OpenGLAxesRenderer::render() {
 	assert(m_vertex_array != 0);
 
+	glDisable(GL_FRAMEBUFFER_SRGB);
+
 	glBindVertexArray(m_vertex_array);
 	glLineWidth(2.0f);
 	glDrawElements(GL_LINES, 6, GL_UNSIGNED_INT, 0);

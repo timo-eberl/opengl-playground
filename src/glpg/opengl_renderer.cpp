@@ -77,6 +77,7 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
 			const auto &geometry_gpu_data = get_geometry_gpu_data(mesh_section.geometry);
 			assert(geometry_gpu_data.vertex_array != 0);
 
+			glEnable(GL_FRAMEBUFFER_SRGB);
 			glBindVertexArray(geometry_gpu_data.vertex_array);
 			glDrawElements(GL_TRIANGLES, mesh_section.geometry->indices.size(), GL_UNSIGNED_INT, NULL);
 
@@ -101,6 +102,7 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
 void OpenGLRenderer::set_clear_color(glm::vec4 clear_color) { m_clear_color = clear_color; }
 
 void OpenGLRenderer::clear() {
+	glDisable(GL_FRAMEBUFFER_SRGB);
 	glClearColor(m_clear_color.r, m_clear_color.g, m_clear_color.b, m_clear_color.a);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
@@ -108,6 +110,7 @@ void OpenGLRenderer::clear() {
 void OpenGLRenderer::clear_color() { clear_color(m_clear_color); }
 
 void OpenGLRenderer::clear_color(glm::vec4 clear_color) {
+	glDisable(GL_FRAMEBUFFER_SRGB); 
 	glClearColor(clear_color.r, clear_color.g, clear_color.b, clear_color.a);
 	glClear(GL_COLOR_BUFFER_BIT);
 }
