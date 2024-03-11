@@ -61,8 +61,8 @@ OpenGLTextureGPUData glpg::opengl_setup_texture(const Texture &texture) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_filter);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mag_filter);
 	glTexImage2D(
-		GL_TEXTURE_2D, 0, format, texture.width, texture.height, 0,
-		format, GL_UNSIGNED_BYTE, texture.data
+		GL_TEXTURE_2D, 0, format, texture.image_data.width, texture.image_data.height, 0,
+		format, GL_UNSIGNED_BYTE, texture.image_data.data_ptr
 	);
 	glGenerateMipmap(GL_TEXTURE_2D);
 

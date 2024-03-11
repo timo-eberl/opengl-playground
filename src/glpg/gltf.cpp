@@ -66,7 +66,102 @@ static bool is_primitive_valid(cgltf_primitive &primitive, cgltf_node *node, std
 	return unsupported.size() == 0;
 }
 
-static void add_mesh_from_node(cgltf_node *node, Mesh &out_mesh, std::vector<std::string> &unsupported) {
+static std::shared_ptr<Texture> create_texture(
+	const cgltf_texture_view &gltf_texture_view, std::vector<std::string> &unsupported,
+	const std::string &gltf_path
+) {
+	assert(!gltf_texture_view.has_transform);
+	assert(gltf_texture_view.texcoord == 0);
+	const auto image = gltf_texture_view.texture->image;
+	const auto sampler = gltf_texture_view.texture->sampler;
+	if (image->buffer_view) {
+		const unsigned char *raw_data = cgltf_buffer_view_data(image->buffer_view);
+		const int raw_data_len = image->buffer_view->size;
+
+		const auto image_data = Texture::image_data_from_memory(raw_data, raw_data_len, false);
+		assert(image_data.data_ptr);
+
+		return std::make_shared<Texture>(
+			image_data,
+			image->name
+		);
+	}
+	else {
+		const bool path_contains_slash = gltf_path.find('/') != std::string::npos;
+		const auto after_last_slash = path_contains_slash ? (gltf_path.find_last_of('/') + 1) : 0;
+		const auto gltf_location = gltf_path.substr(0, after_last_slash);
+		const auto asset_path = gltf_location + image->uri;
+		const auto texture = std::make_shared<Texture>(asset_path, false);
+		const auto n_channels = texture->image_data.n_channels;
+
+		return texture;
+	}
+}
+
+static std::shared_ptr<Material> create_material(
+	cgltf_material *gltf_material, std::vector<std::string> &unsupported,
+	const std::string &gltf_path
+) {
+	if (!gltf_material->has_pbr_metallic_roughness) {
+		unsupported.push_back("Material without pbrMetallicRoughness");
+		return nullptr;
+	}
+
+	const auto material = std::make_shared<Material>();
+	static const auto shader_program = std::make_shared<ShaderProgram>(
+		"shaders/default/blinn_phong.vert", "shaders/default/blinn_phong.frag"
+	);
+	material->shader_program = shader_program;
+
+	const auto &normal_tex = gltf_material->normal_texture;
+	if (normal_tex.texture) {
+		const auto texture = create_texture(normal_tex, unsupported, gltf_path);
+		material->uniforms["normal_tex"] = make_uniform(texture);
+	}
+	else {
+		static const auto fallback_normal
+			= std::make_shared<Texture>("textures/fallback/normal.png", Texture::Format::RGB);
+		material->uniforms["normal_tex"] = glpg::make_uniform(fallback_normal);
+	}
+
+	const auto &albedo_color = gltf_material->pbr_metallic_roughness.base_color_factor;
+	material->uniforms["albedo_color"] = make_uniform(glm::vec4(
+		albedo_color[0], albedo_color[1], albedo_color[2], albedo_color[3]
+	));
+	const auto &albedo_tex = gltf_material->pbr_metallic_roughness.base_color_texture;
+	if (albedo_tex.texture) {
+		const auto texture = create_texture(albedo_tex, unsupported, gltf_path);
+		material->uniforms["albedo_tex"] = make_uniform(texture);
+	}
+	else {
+		static const auto fallback_albedo
+			= std::make_shared<Texture>("textures/fallback/white.jpg", Texture::Format::RGB);
+		material->uniforms["albedo_tex"] = glpg::make_uniform(fallback_albedo);
+	}
+
+	const auto &metallic_factor = gltf_material->pbr_metallic_roughness.metallic_factor;
+	const auto &roughness_factor = gltf_material->pbr_metallic_roughness.roughness_factor;
+	material->uniforms["metallic_factor"] = make_uniform(glm::vec1(metallic_factor));
+	material->uniforms["roughness_factor"] = make_uniform(glm::vec1(roughness_factor));
+	const auto &metallic_roughness_tex = gltf_material->pbr_metallic_roughness.metallic_roughness_texture;
+	if (metallic_roughness_tex.texture) {
+		const auto texture = create_texture(metallic_roughness_tex, unsupported, gltf_path);
+		material->uniforms["metallic_roughness_tex"] = make_uniform(texture);
+	}
+	else {
+		static const auto fallback_metallic_roughness
+			= std::make_shared<Texture>("textures/fallback/white.jpg", Texture::Format::RGB);
+		material->uniforms["metallic_roughness_tex"]
+			= glpg::make_uniform(fallback_metallic_roughness);
+	}
+
+	return material;
+}
+
+static void add_mesh_from_node(
+	cgltf_node *node, Mesh &out_mesh, std::vector<std::string> &unsupported,
+	const std::string &gltf_path
+) {
 	for (size_t i = 0; i < node->mesh->primitives_count; i++) {
 		auto primitive = node->mesh->primitives[i];
 
@@ -131,24 +226,28 @@ static void add_mesh_from_node(cgltf_node *node, Mesh &out_mesh, std::vector<std
 			);
 		}
 
+		const auto material = create_material(primitive.material, unsupported, gltf_path);
+
 		out_mesh.sections.push_back(MeshSection(
 			std::make_shared<Geometry>(std::move(geometry)),
-			nullptr
+			material
 		));
 	}
 }
 
-static void add_all_meshes_from_node_recursive(cgltf_node *node, Scene &scene, std::vector<std::string> &unsupported) {
+static void add_all_meshes_from_node_recursive(
+	cgltf_node *node, Scene &scene, std::vector<std::string> &unsupported, const std::string &gltf_path
+) {
 	if (node->mesh) {
 		auto node_world_matrix = glm::identity<glm::mat4>();
 		cgltf_node_transform_world(node, reinterpret_cast<float *>(&node_world_matrix));
 
 		auto mesh = std::make_shared<Mesh>();
-		add_mesh_from_node(node, *mesh, unsupported);
+		add_mesh_from_node(node, *mesh, unsupported, gltf_path);
 		scene.add(std::make_shared<MeshNode>(mesh, node_world_matrix));
 	}
 	for (size_t i = 0; i < node->children_count; i++) {
-		add_all_meshes_from_node_recursive(node->children[i], scene, unsupported);
+		add_all_meshes_from_node_recursive(node->children[i], scene, unsupported, gltf_path);
 	}
 }
 
@@ -192,7 +291,7 @@ Scene gltf::import(const std::string& path) {
 	std::vector<std::string> unsupported_features = {};
 	for (size_t i = 0; i < data->scene->nodes_count; i++) {
 		auto node = data->scene->nodes[i];
-		add_all_meshes_from_node_recursive(node, scene, unsupported_features);
+		add_all_meshes_from_node_recursive(node, scene, unsupported_features, path);
 	}
 
 	if (unsupported_features.size() > 0) {

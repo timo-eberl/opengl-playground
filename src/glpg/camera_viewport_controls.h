@@ -25,7 +25,7 @@ private:
 	glm::vec3 m_target = glm::vec3(0.0f);
 	glm::vec2 m_rotation;
 	glm::vec2 m_previous_mouse_pos = glm::vec2(0.0f);
-	float m_camera_distance = 12.0f;
+	float m_camera_distance = 24.0f;
 	ControlMode m_previous_control_mode = IDLE;
 	bool m_dirty = true;
 };

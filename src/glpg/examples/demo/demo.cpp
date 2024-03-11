@@ -37,9 +37,9 @@ static void create_scene(State& state) {
 
 	// copy the default material and modify it
 	const auto tex_mat = std::make_shared<glpg::Material>(*state.scene.default_material);
-	tex_mat->uniforms["albedo_tex"] = glpg::make_uniform(
-		std::make_shared<glpg::Texture>("textures/container.jpg", glpg::Texture::Format::RGB)
-	);
+	// tex_mat->uniforms["albedo_tex"] = glpg::make_uniform(
+	// 	std::make_shared<glpg::Texture>("textures/container.jpg", glpg::Texture::Format::RGB)
+	// );
 
 	state.scene.add(glpg::gltf::import("models/antique_camera/antique_camera.glb"));
 	const auto cube = glpg::gltf::import("models/cube/cube.gltf").get_mesh_nodes()[0];

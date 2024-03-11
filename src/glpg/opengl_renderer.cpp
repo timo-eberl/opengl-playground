@@ -213,7 +213,7 @@ const OpenGLTextureGPUData & OpenGLRenderer::get_texture_gpu_data(
 ) {
 	if (!m_textures.contains(texture)) {
 		log::warn(
-			std::string("GPU Data of Texture ") + texture->asset_path + " not found."
+			std::string("GPU Data of Texture ") + texture->name + " not found."
 			+ " Consider preloading before rendering."
 		);
 		preload(texture);
