@@ -17,6 +17,7 @@ struct OpenGLGeometryGPUData {
 	GLuint positions_buffer = 0;
 	GLuint normals_buffer = 0;
 	GLuint uvs_buffer = 0;
+	GLuint tangents_buffer = 0;
 	GLuint index_buffer = 0;
 };
 

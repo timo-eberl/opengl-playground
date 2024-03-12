@@ -15,6 +15,7 @@ struct Geometry {
 	std::vector<glm::vec3> positions = {};
 	std::vector<glm::vec3> normals = {}; // optional - may be empty
 	std::vector<glm::vec2> uvs = {}; // optional - may be empty
+	std::vector<glm::vec4> tangents = {}; // optional - may be empty
 
 	std::vector<uint32_t> indices = {};
 };

@@ -16,7 +16,8 @@ using namespace glpg;
 
 static void extract_attributes(
 	const cgltf_primitive &primitive,
-	cgltf_accessor **pos_attribute, cgltf_accessor **normal_attribute, cgltf_accessor **uv_attribute
+	cgltf_accessor **pos_attribute, cgltf_accessor **normal_attribute,
+	cgltf_accessor **uv_attribute, cgltf_accessor **tangent_attribute
 ) {
 	for (size_t i = 0; i < primitive.attributes_count; i++) {
 		const auto name = std::string(primitive.attributes[i].name);
@@ -28,6 +29,9 @@ static void extract_attributes(
 		}
 		else if (name == std::string("TEXCOORD_0")) {
 			*uv_attribute = primitive.attributes[i].data;
+		}
+		else if (name == std::string("TANGENT")) {
+			*tangent_attribute = primitive.attributes[i].data;
 		}
 	}
 }
@@ -48,10 +52,15 @@ static bool is_primitive_valid(const cgltf_primitive &primitive, cgltf_node *nod
 	cgltf_accessor *pos_attribute = nullptr;
 	cgltf_accessor *normal_attribute = nullptr; // optional
 	cgltf_accessor *uv_attribute = nullptr; // optional
-	extract_attributes(primitive, &pos_attribute, &normal_attribute, &uv_attribute);
+	cgltf_accessor *tangent_attribute = nullptr; // optional
+	extract_attributes(
+		primitive, &pos_attribute, &normal_attribute, &uv_attribute, &tangent_attribute
+	);
+
 	if (pos_attribute->component_type != cgltf_component_type_r_32f ||
 		(normal_attribute && normal_attribute->component_type != cgltf_component_type_r_32f) ||
-		(uv_attribute && uv_attribute->component_type != cgltf_component_type_r_32f)
+		(uv_attribute && uv_attribute->component_type != cgltf_component_type_r_32f) ||
+		(tangent_attribute && tangent_attribute->component_type != cgltf_component_type_r_32f)
 	) {
 		unsupported.push_back("Attribute type other than 32 bit float");
 	}
@@ -63,6 +72,9 @@ static bool is_primitive_valid(const cgltf_primitive &primitive, cgltf_node *nod
 	}
 	if (uv_attribute && uv_attribute->type != cgltf_type_vec2) {
 		unsupported.push_back("Texture Coordinate attribute with a number of components other than 2");
+	}
+	if (tangent_attribute && tangent_attribute->type != cgltf_type_vec4) {
+		unsupported.push_back("Tangent attribute with a number of components other than 4");
 	}
 
 	return unsupported.size() == 0;
@@ -254,13 +266,17 @@ static void add_mesh_from_node(
 		cgltf_accessor *pos_attribute = nullptr;
 		cgltf_accessor *normal_attribute = nullptr; // optional
 		cgltf_accessor *uv_attribute = nullptr; // optional
-		extract_attributes(primitive, &pos_attribute, &normal_attribute, &uv_attribute);
+		cgltf_accessor *tangent_attribute = nullptr; // optional
+		extract_attributes(
+			primitive, &pos_attribute, &normal_attribute, &uv_attribute, &tangent_attribute
+		);
 
 		assert(pos_attribute); // position attribute must exist
 		const auto vertices_count = pos_attribute->count;
-		// normal and uvs are optional
+		// others are optional, but if they exist, must have the same number of attributes
 		assert(!normal_attribute || vertices_count == normal_attribute->count);
 		assert(!uv_attribute || vertices_count == uv_attribute->count);
+		assert(!tangent_attribute || vertices_count == tangent_attribute->count);
 
 		// load attribute data from storage buffer into geometry data
 		geometry.positions.resize(vertices_count);
@@ -277,6 +293,12 @@ static void add_mesh_from_node(
 			geometry.uvs.resize(vertices_count);
 			cgltf_accessor_unpack_floats(
 				uv_attribute, reinterpret_cast<float *>(geometry.uvs.data()), 2 * vertices_count
+			);
+		}
+		if (tangent_attribute) {
+			geometry.tangents.resize(vertices_count);
+			cgltf_accessor_unpack_floats(
+				tangent_attribute, reinterpret_cast<float *>(geometry.tangents.data()), 4 * vertices_count
 			);
 		}
 

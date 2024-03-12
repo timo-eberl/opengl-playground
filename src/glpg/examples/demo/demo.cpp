@@ -41,10 +41,14 @@ static void create_scene(State& state) {
 		std::make_shared<glpg::Texture>("textures/container.jpg")
 	);
 
-	state.scene.add(glpg::gltf::import("models/antique_camera/antique_camera.glb"));
-	const auto cube = glpg::gltf::import("models/cube/cube.gltf").get_mesh_nodes()[0];
-	cube->get_mesh()->sections[0].material = tex_mat;
-	state.scene.add(cube);
+	// state.scene.add(glpg::gltf::import("models/antique_camera/antique_camera.glb"));
+	state.scene.add(glpg::gltf::import("models/gravel_torus/gravel_torus.glb"));
+	// state.scene.add(glpg::gltf::import("models/gravel_torus/gravel_torus_without_tangents.glb"));
+	// state.scene.add(glpg::gltf::import("models/cube/cube.gltf"));
+
+	// const auto cube = glpg::gltf::import("models/cube/cube.gltf").get_mesh_nodes()[0];
+	// cube->get_mesh()->sections[0].material = tex_mat;
+	// state.scene.add(cube);
 
 	state.renderer.preload(state.scene);
 }
@@ -58,7 +62,7 @@ static void initialize(GLFWwindow* window, State& state) {
 
 	const auto initial_camera_rotation = glm::vec2(glm::radians(-24.2f), glm::radians(63.6f));
 	state.camera_controls = std::make_unique<glpg::CameraViewportControls>(initial_camera_rotation);
-	state.camera_controls->set_target(glm::vec3(0.0f, 3.0f, 0.0f));
+	state.camera_controls->set_target(glm::vec3(0.0f, 0.0f, 0.0f));
 
 	glfwSetScrollCallback(window, scroll_callback);
 }
