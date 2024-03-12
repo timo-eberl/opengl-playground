@@ -1,5 +1,7 @@
 #include "gltf.h"
 
+#include <glad/glad.h> // for sampler constants
+
 #include <cgltf.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -13,7 +15,7 @@
 using namespace glpg;
 
 static void extract_attributes(
-	cgltf_primitive &primitive,
+	const cgltf_primitive &primitive,
 	cgltf_accessor **pos_attribute, cgltf_accessor **normal_attribute, cgltf_accessor **uv_attribute
 ) {
 	for (size_t i = 0; i < primitive.attributes_count; i++) {
@@ -30,7 +32,7 @@ static void extract_attributes(
 	}
 }
 
-static bool is_primitive_valid(cgltf_primitive &primitive, cgltf_node *node, std::vector<std::string> &unsupported) {
+static bool is_primitive_valid(const cgltf_primitive &primitive, cgltf_node *node, std::vector<std::string> &unsupported) {
 	if (primitive.type != cgltf_primitive_type_triangles) {
 		unsupported.push_back("Mesh type other than primitive triangles");
 	}
@@ -66,6 +68,45 @@ static bool is_primitive_valid(cgltf_primitive &primitive, cgltf_node *node, std
 	return unsupported.size() == 0;
 }
 
+static Texture::SampleData create_sample_data(
+	const cgltf_sampler &sampler, std::vector<std::string> &unsupported
+) {
+	Texture::SampleData sample_data = {};
+	
+	switch (sampler.wrap_s) {
+		case GL_CLAMP_TO_EDGE: sample_data.wrap_mode_s = Texture::CLAMP_TO_EDGE; break;
+		case GL_CLAMP_TO_BORDER: sample_data.wrap_mode_s = Texture::CLAMP_TO_BORDER; break;
+		case GL_MIRRORED_REPEAT: sample_data.wrap_mode_s = Texture::MIRRORED_REPEAT; break;
+		case GL_REPEAT: sample_data.wrap_mode_s = Texture::REPEAT; break;
+		case GL_MIRROR_CLAMP_TO_EDGE: sample_data.wrap_mode_s = Texture::MIRROR_CLAMP_TO_EDGE; break;
+		default: sample_data.wrap_mode_s = Texture::REPEAT; break;
+	}
+	switch (sampler.wrap_t) {
+		case GL_CLAMP_TO_EDGE: sample_data.wrap_mode_t = Texture::CLAMP_TO_EDGE; break;
+		case GL_CLAMP_TO_BORDER: sample_data.wrap_mode_t = Texture::CLAMP_TO_BORDER; break;
+		case GL_MIRRORED_REPEAT: sample_data.wrap_mode_t = Texture::MIRRORED_REPEAT; break;
+		case GL_REPEAT: sample_data.wrap_mode_t = Texture::REPEAT; break;
+		case GL_MIRROR_CLAMP_TO_EDGE: sample_data.wrap_mode_t = Texture::MIRROR_CLAMP_TO_EDGE; break;
+		default: sample_data.wrap_mode_t = Texture::REPEAT; break;
+	}
+	switch (sampler.min_filter) {
+		case GL_NEAREST: sample_data.min_filter = Texture::NEAREST; break;
+		case GL_LINEAR: sample_data.min_filter = Texture::LINEAR; break;
+		case GL_NEAREST_MIPMAP_NEAREST: sample_data.min_filter = Texture::NEAREST_MIPMAP_NEAREST; break;
+		case GL_LINEAR_MIPMAP_NEAREST: sample_data.min_filter = Texture::LINEAR_MIPMAP_NEAREST; break;
+		case GL_NEAREST_MIPMAP_LINEAR: sample_data.min_filter = Texture::NEAREST_MIPMAP_LINEAR; break;
+		case GL_LINEAR_MIPMAP_LINEAR: sample_data.min_filter = Texture::LINEAR_MIPMAP_LINEAR; break;
+		default: sample_data.min_filter = Texture::LINEAR_MIPMAP_LINEAR; break;
+	}
+	switch (sampler.mag_filter) {
+		case GL_NEAREST: sample_data.mag_filter = Texture::MAG_NEAREST; break;
+		case GL_LINEAR: sample_data.mag_filter = Texture::MAG_LINEAR; break;
+		default: sample_data.mag_filter = Texture::MAG_LINEAR; break;
+	}
+
+	return sample_data;
+}
+
 static std::shared_ptr<Texture> create_texture(
 	const cgltf_texture_view &gltf_texture_view, std::vector<std::string> &unsupported,
 	const std::string &gltf_path, bool srgb = true
@@ -73,7 +114,7 @@ static std::shared_ptr<Texture> create_texture(
 	assert(!gltf_texture_view.has_transform);
 	assert(gltf_texture_view.texcoord == 0);
 	const auto image = gltf_texture_view.texture->image;
-	const auto sampler = gltf_texture_view.texture->sampler;
+	const auto sample_data = create_sample_data(*gltf_texture_view.texture->sampler, unsupported);
 	if (image->buffer_view) {
 		const unsigned char *raw_data = cgltf_buffer_view_data(image->buffer_view);
 		const int raw_data_len = image->buffer_view->size;
@@ -88,7 +129,8 @@ static std::shared_ptr<Texture> create_texture(
 				Texture::Channels::AUTOMATIC,
 				srgb ? Texture::ColorSpace::SRGB : Texture::ColorSpace::NON_COLOR,
 				false
-			)
+			),
+			sample_data
 		);
 	}
 	else {
@@ -100,8 +142,7 @@ static std::shared_ptr<Texture> create_texture(
 			Texture::Channels::AUTOMATIC,
 			srgb ? Texture::ColorSpace::SRGB : Texture::ColorSpace::NON_COLOR,
 			false
-		));
-		const auto n_channels = texture->image_data.n_channels;
+		), sample_data);
 
 		return texture;
 	}
