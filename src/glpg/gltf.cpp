@@ -7,6 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <cassert>
+#include <unordered_map>
 
 #include "log.h"
 
@@ -43,7 +44,7 @@ static bool is_primitive_valid(const cgltf_primitive &primitive, cgltf_node *nod
 	if (!primitive.indices) {
 		unsupported.push_back("Non-indexed mesh");
 	}
-	if (primitive.indices->component_type != cgltf_component_type_r_16u // unsigned short
+	else if (primitive.indices->component_type != cgltf_component_type_r_16u // unsigned short
 		&& primitive.indices->component_type != cgltf_component_type_r_32u // unsigned int
 	) {
 		unsupported.push_back("Index format other than unsigned short or unsigned int");
@@ -120,10 +121,19 @@ static Texture::SampleData create_sample_data(
 }
 
 static std::shared_ptr<Texture> create_texture(
-	const cgltf_texture_view &gltf_texture_view, std::vector<std::string> &unsupported,
+	const cgltf_texture_view &gltf_texture_view,
+	std::unordered_map<cgltf_image*, std::shared_ptr<Texture>> &textures,
+	std::unordered_map<std::string, std::shared_ptr<Texture>> &external_textures,
+	std::vector<std::string> &unsupported,
 	const std::string &gltf_path, bool srgb = true
 ) {
-	assert(!gltf_texture_view.has_transform);
+	if (textures.contains(gltf_texture_view.texture->image)) {
+		return textures[gltf_texture_view.texture->image];
+	}
+
+	if (gltf_texture_view.has_transform) {
+		unsupported.push_back("Texture view transform");
+	}
 	assert(gltf_texture_view.texcoord == 0);
 	const auto image = gltf_texture_view.texture->image;
 
@@ -138,7 +148,7 @@ static std::shared_ptr<Texture> create_texture(
 		const auto image_data = Texture::image_data_from_memory(raw_data, raw_data_len, false);
 		assert(image_data.data_ptr);
 
-		return std::make_shared<Texture>(
+		auto texture = std::make_shared<Texture>(
 			image_data,
 			image->name ? image->name : "",
 			Texture::MetaData(
@@ -148,8 +158,14 @@ static std::shared_ptr<Texture> create_texture(
 			),
 			sample_data
 		);
+		textures.emplace(gltf_texture_view.texture->image, texture);
+		return texture;
 	}
 	else {
+		if (external_textures.contains(image->uri)) {
+			return external_textures[image->uri];
+		}
+
 		const bool path_contains_slash = gltf_path.find('/') != std::string::npos;
 		const auto after_last_slash = path_contains_slash ? (gltf_path.find_last_of('/') + 1) : 0;
 		const auto gltf_location = gltf_path.substr(0, after_last_slash);
@@ -160,14 +176,24 @@ static std::shared_ptr<Texture> create_texture(
 			false
 		), sample_data);
 
+		external_textures.emplace(image->uri, texture);
+
 		return texture;
 	}
 }
 
 static std::shared_ptr<Material> create_material(
-	cgltf_material *gltf_material, std::vector<std::string> &unsupported,
+	cgltf_material *gltf_material,
+	std::unordered_map<cgltf_image*, std::shared_ptr<Texture>> &textures,
+	std::unordered_map<std::string, std::shared_ptr<Texture>> &external_textures,
+	std::unordered_map<cgltf_material*, std::shared_ptr<Material>> &materials,
+	std::vector<std::string> &unsupported,
 	const std::string &gltf_path
 ) {
+	if (materials.contains(gltf_material)) {
+		return materials[gltf_material];
+	}
+
 	if (!gltf_material->has_pbr_metallic_roughness) {
 		unsupported.push_back("Material without pbrMetallicRoughness");
 		return nullptr;
@@ -179,9 +205,15 @@ static std::shared_ptr<Material> create_material(
 	);
 	material->shader_program = shader_program;
 
+	if (gltf_material->double_sided) {
+		material->culling_mode = Material::CullingMode::NONE;
+	}
+
 	const auto &normal_tex = gltf_material->normal_texture;
 	if (normal_tex.texture) {
-		const auto texture = create_texture(normal_tex, unsupported, gltf_path, false);
+		const auto texture = create_texture(
+			normal_tex, textures, external_textures, unsupported, gltf_path, false
+		);
 		material->uniforms["normal_tex"] = make_uniform(texture);
 	}
 	else {
@@ -193,12 +225,20 @@ static std::shared_ptr<Material> create_material(
 	}
 
 	const auto &albedo_color = gltf_material->pbr_metallic_roughness.base_color_factor;
+	auto flkadsj = glm::vec4(
+		albedo_color[0], albedo_color[1], albedo_color[2], albedo_color[3]
+	);
+	auto flkdsjalkfjdk = glm::vec4(
+		0.076, 0.037, 0.024, 1.0
+	);
 	material->uniforms["albedo_color"] = make_uniform(glm::vec4(
 		albedo_color[0], albedo_color[1], albedo_color[2], albedo_color[3]
 	));
 	const auto &albedo_tex = gltf_material->pbr_metallic_roughness.base_color_texture;
 	if (albedo_tex.texture) {
-		const auto texture = create_texture(albedo_tex, unsupported, gltf_path);
+		const auto texture = create_texture(
+			albedo_tex, textures, external_textures, unsupported, gltf_path
+		);
 		material->uniforms["albedo_tex"] = make_uniform(texture);
 	}
 	else {
@@ -213,7 +253,9 @@ static std::shared_ptr<Material> create_material(
 	material->uniforms["roughness_factor"] = make_uniform(glm::vec1(roughness_factor));
 	const auto &metallic_roughness_tex = gltf_material->pbr_metallic_roughness.metallic_roughness_texture;
 	if (metallic_roughness_tex.texture) {
-		const auto texture = create_texture(metallic_roughness_tex, unsupported, gltf_path, false);
+		const auto texture = create_texture(
+			metallic_roughness_tex, textures, external_textures, unsupported, gltf_path, false
+		);
 		material->uniforms["metallic_roughness_tex"] = make_uniform(texture);
 	}
 	else {
@@ -225,11 +267,17 @@ static std::shared_ptr<Material> create_material(
 			= glpg::make_uniform(fallback_metallic_roughness);
 	}
 
+	materials.emplace(gltf_material, material);
+
 	return material;
 }
 
 static void add_mesh_from_node(
-	cgltf_node *node, Mesh &out_mesh, std::vector<std::string> &unsupported,
+	cgltf_node *node, Mesh &out_mesh,
+	std::unordered_map<cgltf_image*, std::shared_ptr<Texture>> &textures,
+	std::unordered_map<std::string, std::shared_ptr<Texture>> &external_textures,
+	std::unordered_map<cgltf_material*, std::shared_ptr<Material>> &materials,
+	std::vector<std::string> &unsupported,
 	const std::string &gltf_path
 ) {
 	for (size_t i = 0; i < node->mesh->primitives_count; i++) {
@@ -313,7 +361,10 @@ static void add_mesh_from_node(
 			geometry.tangents = generate_tangents(geometry);
 		}
 
-		const auto material = create_material(primitive.material, unsupported, gltf_path);
+		const auto material = primitive.material
+			? create_material(
+				primitive.material, textures, external_textures, materials, unsupported, gltf_path)
+			: nullptr;
 
 		out_mesh.sections.push_back(MeshSection(
 			std::make_shared<Geometry>(std::move(geometry)),
@@ -323,18 +374,24 @@ static void add_mesh_from_node(
 }
 
 static void add_all_meshes_from_node_recursive(
-	cgltf_node *node, Scene &scene, std::vector<std::string> &unsupported, const std::string &gltf_path
+	cgltf_node *node, Scene &scene,
+	std::unordered_map<cgltf_image*, std::shared_ptr<Texture>> &textures,
+	std::unordered_map<std::string, std::shared_ptr<Texture>> &external_textures,
+	std::unordered_map<cgltf_material*, std::shared_ptr<Material>> &materials,
+	std::vector<std::string> &unsupported, const std::string &gltf_path
 ) {
 	if (node->mesh) {
 		auto node_world_matrix = glm::identity<glm::mat4>();
 		cgltf_node_transform_world(node, reinterpret_cast<float *>(&node_world_matrix));
 
 		auto mesh = std::make_shared<Mesh>();
-		add_mesh_from_node(node, *mesh, unsupported, gltf_path);
+		add_mesh_from_node(node, *mesh, textures, external_textures, materials, unsupported, gltf_path);
 		scene.add(std::make_shared<MeshNode>(mesh, node_world_matrix));
 	}
 	for (size_t i = 0; i < node->children_count; i++) {
-		add_all_meshes_from_node_recursive(node->children[i], scene, unsupported, gltf_path);
+		add_all_meshes_from_node_recursive(
+			node->children[i], scene, textures, external_textures, materials, unsupported, gltf_path
+		);
 	}
 }
 
@@ -375,10 +432,15 @@ Scene gltf::import(const std::string& path) {
 		return scene;
 	}
 
+	std::unordered_map<cgltf_image*, std::shared_ptr<Texture>> textures;
+	std::unordered_map<std::string, std::shared_ptr<Texture>> external_textures;
+	std::unordered_map<cgltf_material*, std::shared_ptr<Material>> materials;
 	std::vector<std::string> unsupported_features = {};
 	for (size_t i = 0; i < data->scene->nodes_count; i++) {
 		auto node = data->scene->nodes[i];
-		add_all_meshes_from_node_recursive(node, scene, unsupported_features, path);
+		add_all_meshes_from_node_recursive(
+			node, scene, textures, external_textures, materials, unsupported_features, path
+		);
 	}
 
 	if (unsupported_features.size() > 0) {
