@@ -41,8 +41,8 @@ static void create_scene(State& state) {
 		std::make_shared<glpg::Texture>("textures/container.jpg")
 	);
 
-	// state.scene.add(glpg::gltf::import("models/antique_camera/antique_camera.glb"));
-	state.scene.add(glpg::gltf::import("models/gravel_torus/gravel_torus.glb"));
+	state.scene.add(glpg::gltf::import("models/antique_camera/antique_camera.glb"));
+	// state.scene.add(glpg::gltf::import("models/gravel_torus/gravel_torus.glb"));
 	// state.scene.add(glpg::gltf::import("models/gravel_torus/gravel_torus_without_tangents.glb"));
 	// state.scene.add(glpg::gltf::import("models/cube/cube.gltf"));
 

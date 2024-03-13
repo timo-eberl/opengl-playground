@@ -17,6 +17,8 @@ add_subdirectory(stb_image)
 add_subdirectory(glm)
 # cgltf - gltf loader
 add_subdirectory(cgltf)
+# mikktspace - tangent generation
+add_subdirectory(mikktspace)
 
 # our project
 add_compile_definitions(_ASSETS_DIR=\"${PROJECT_SOURCE_DIR}/assets/\")
@@ -36,6 +38,7 @@ set(SOURCES
 	src/glpg/opengl_texture.cpp
 	src/glpg/opengl_axes_renderer.cpp
 	src/glpg/assets.cpp
+	src/glpg/tangent_generation.cpp
 	src/glpg/examples/hello_triangle/hello_triangle.cpp
 	src/glpg/examples/demo/demo.cpp
 )
@@ -50,3 +53,4 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glad)
 target_link_libraries(${PROJECT_NAME} PRIVATE stb_image)
 target_link_libraries(${PROJECT_NAME} PRIVATE glm)
 target_link_libraries(${PROJECT_NAME} PRIVATE cgltf)
+target_link_libraries(${PROJECT_NAME} PRIVATE mikktspace)

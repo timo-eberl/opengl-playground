@@ -302,6 +302,11 @@ static void add_mesh_from_node(
 			);
 		}
 
+		// if no tangent attribute is present, calculate if possible (normals and uvs required)
+		if (!tangent_attribute && normal_attribute && uv_attribute) {
+			geometry.tangents = generate_tangents(geometry);
+		}
+
 		const auto material = create_material(primitive.material, unsupported, gltf_path);
 
 		out_mesh.sections.push_back(MeshSection(

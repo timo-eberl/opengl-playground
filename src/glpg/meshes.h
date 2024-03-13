@@ -20,6 +20,8 @@ struct Geometry {
 	std::vector<uint32_t> indices = {};
 };
 
+std::vector<glm::vec4> generate_tangents(const Geometry &geometry);
+
 struct MeshSection {
 	std::shared_ptr<Geometry> geometry = {};
 	std::shared_ptr<Material> material = {};

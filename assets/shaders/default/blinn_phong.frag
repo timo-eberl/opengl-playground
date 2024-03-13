@@ -60,8 +60,4 @@ void main() {
 		mix(diffuse_lighting * albedo, vec3(specular_lighting), specular_strength)
 		* directional_light_intensity + vec3(ambient_lighting * albedo)
 	), 1.0);
-
-	// frag_color = tangent;
-	// frag_color = vec4((normal + 1) * 0.5, 1.0);
-	// frag_color = vec4(normal, 1.0);
 }
