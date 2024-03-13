@@ -53,6 +53,16 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
 			const auto &material = mesh_section.material ?
 				mesh_section.material : scene.default_material;
 
+			switch (material->culling_mode) {
+				case Material::CullingMode::NONE:
+					glDisable(GL_CULL_FACE); break;
+				case Material::CullingMode::FRONT:
+					glEnable(GL_CULL_FACE); glCullFace(GL_FRONT); break;
+				case Material::CullingMode::BACK:
+					glEnable(GL_CULL_FACE); glCullFace(GL_BACK); break;
+				default: assert(false); break;
+			}
+
 			const auto &shader_program = material->shader_program ?
 				material->shader_program : m_error_shader_program;
 
