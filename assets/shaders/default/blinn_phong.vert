@@ -11,7 +11,6 @@ out vec2 uv;
 out vec4 tangent;
 
 uniform mat4 model_matrix;
-uniform mat4 projection_matrix;
 uniform mat4 view_projection_matrix;
 uniform mat3 normal_local_to_world_matrix;
 
