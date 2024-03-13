@@ -126,7 +126,11 @@ static std::shared_ptr<Texture> create_texture(
 	assert(!gltf_texture_view.has_transform);
 	assert(gltf_texture_view.texcoord == 0);
 	const auto image = gltf_texture_view.texture->image;
-	const auto sample_data = create_sample_data(*gltf_texture_view.texture->sampler, unsupported);
+
+	const auto sample_data = gltf_texture_view.texture->sampler
+		? create_sample_data(*gltf_texture_view.texture->sampler, unsupported)
+		: Texture::SampleData();
+
 	if (image->buffer_view) {
 		const unsigned char *raw_data = cgltf_buffer_view_data(image->buffer_view);
 		const int raw_data_len = image->buffer_view->size;
@@ -136,7 +140,7 @@ static std::shared_ptr<Texture> create_texture(
 
 		return std::make_shared<Texture>(
 			image_data,
-			image->name,
+			image->name ? image->name : "",
 			Texture::MetaData(
 				Texture::Channels::AUTOMATIC,
 				srgb ? Texture::ColorSpace::SRGB : Texture::ColorSpace::NON_COLOR,
@@ -234,7 +238,9 @@ static void add_mesh_from_node(
 		std::vector<std::string> unsupported_new;
 		if (!is_primitive_valid(primitive, node, unsupported_new)) {
 			for (auto &new_error : unsupported_new) {
-				new_error = new_error + " (" + node->name + "." + node->mesh->name + ")";
+				const auto node_name = node->name ? node->name : "";
+				const auto mesh_name = node->mesh->name ? node->mesh->name : "";
+				new_error = new_error + " (" + node_name + "." + mesh_name + ")";
 			}
 			unsupported.insert(unsupported.end(), unsupported_new.begin(), unsupported_new.end());
 			continue;
