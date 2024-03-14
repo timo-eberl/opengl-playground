@@ -3,10 +3,21 @@ project(ron)
 set(CMAKE_CXX_STANDARD 20) # Require C++20
 
 # this cmake project builds the library
+
 # the example program(s) will be built by default, they can be disabled like this:
 # set(RON_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
+# the default asset directory is in the same folder ron is
+# when using a custom directory make sure that the default assets (assets/default) are included
+# you can set a custom directory like this:
+# set(RON_ASSET_DIRECTORY /path/to/assets/)
+
 option(RON_BUILD_EXAMPLES "Build the Ron example programs" ON)
+
+if (NOT DEFINED RON_ASSET_DIRECTORY)
+	set(RON_ASSET_DIRECTORY ${PROJECT_SOURCE_DIR}/assets/)
+	message("RON_ASSET_DIRECTORY was not already defined. Default directory will be used: " ${RON_ASSET_DIRECTORY})
+endif()
 
 # dependencies
 	# glfw - create windows, create OpenGL context, handle input
@@ -31,8 +42,8 @@ option(RON_BUILD_EXAMPLES "Build the Ron example programs" ON)
 	# mikktspace - tangent generation
 	add_subdirectory(dependencies/mikktspace)
 
-# our project
-	add_compile_definitions(_ASSETS_DIR=\"${PROJECT_SOURCE_DIR}/assets/\")
+# this project
+	add_compile_definitions(_ASSETS_DIR=\"${RON_ASSET_DIRECTORY}\")
 	set(SOURCES
 		src/log.cpp
 		src/shader_program.cpp
