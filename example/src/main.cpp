@@ -6,17 +6,8 @@
 #include <sstream>
 
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
 #include <ron.h>
-
-// #include <shader_program.h>
-// #include <uniforms.h>
-// #include <perspective_camera.h>
-// #include <camera_viewport_controls.h>
-// #include <scene.h>
-// #include <opengl_rendering.h>
-// #include <gltf.h>
 
 using namespace ron;
 

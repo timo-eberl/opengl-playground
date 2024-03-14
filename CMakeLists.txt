@@ -59,8 +59,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC cgltf)
 target_link_libraries(${PROJECT_NAME} PUBLIC mikktspace)
 
 if (RON_BUILD_EXAMPLES)
-	add_executable(${PROJECT_NAME}_example src/example/main.cpp)
-	# target_include_directories(${PROJECT_NAME}_example PRIVATE src)
+	add_executable(${PROJECT_NAME}_example example/src/main.cpp)
 	# statically link the Ron library
 	target_link_libraries(${PROJECT_NAME}_example PRIVATE ${PROJECT_NAME})
 endif()
