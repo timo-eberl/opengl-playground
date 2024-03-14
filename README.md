@@ -1,6 +1,18 @@
-# OpenGL Playground
+# Ron the Renderer
 
-For now I am experimenting here with OpenGL, loosely based on https://learnopengl.com/
+OpenGL 3D Rendering library written in C++
+
+## Roadmap
+
+- [x] Basic Blinn-Phong rendering of triangle meshes with albedo, normal, metallic and roughness textures
+- [x] glTF 2.0 Import
+- [x] Render multiple scenes
+- [x] Tangent Generation
+- [ ] Multiple, configurable Lights
+- [ ] PBR Lighting
+- [ ] Emissive materials
+- [ ] Transparent materials
+- [ ] Post-Processing
 
 ## Cloning
 
@@ -14,17 +26,33 @@ If you already cloned and forgot `--recurse-submodules` :
 git submodule update --init --recursive
 ```
 
-## Building
+## Build and run the example applicaton
 
 Requirements: C++ Compiler, CMake
 
 ```sh
 cmake -B build
 cmake --build build
+
+./build/ron_example
 ```
 
-## Run
+## Usage
 
-```sh
-./build/opengl-playground
+Initialization:
+
+```CPP
+auto scene = ron::gltf::import("models/default/cube/cube.gltf");
+auto camera = ron::PerspectiveCamera(45.0f, 1920.0f/1080.0f, 0.1f, 1000.0f);
+
+OpenGLRenderer renderer = {};
+renderer.preload(scene);
 ```
+
+Rendering Loop:
+
+```CPP
+renderer.render(scene, camera);
+```
+
+> For a complete example, see `src/example/main.cpp`
