@@ -104,9 +104,9 @@ void create_scene(State& state) {
 	state.scene.add(ron::gltf::import("models/antique_camera/antique_camera.glb"));
 	// state.scene.add(ron::gltf::import("models/gravel_torus/gravel_torus.glb"));
 	// state.scene.add(ron::gltf::import("models/gravel_torus/gravel_torus_without_tangents.glb"));
-	// state.scene.add(ron::gltf::import("models/default/cube/cube.gltf"));
+	// state.scene.add(ron::gltf::import("default/models/cube/cube.gltf"));
 
-	// const auto cube = ron::gltf::import("models/default/cube/cube.gltf").get_mesh_nodes()[0];
+	// const auto cube = ron::gltf::import("default/models/cube/cube.gltf").get_mesh_nodes()[0];
 	// cube->get_mesh()->sections[0].material = tex_mat;
 	// state.scene.add(cube);
 

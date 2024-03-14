@@ -201,7 +201,7 @@ static std::shared_ptr<Material> create_material(
 
 	const auto material = std::make_shared<Material>();
 	static const auto shader_program = std::make_shared<ShaderProgram>(
-		"shaders/default/blinn_phong.vert", "shaders/default/blinn_phong.frag"
+		"default/shaders/blinn_phong.vert", "default/shaders/blinn_phong.frag"
 	);
 	material->shader_program = shader_program;
 
@@ -218,7 +218,7 @@ static std::shared_ptr<Material> create_material(
 	}
 	else {
 		static const auto fallback_normal = std::make_shared<Texture>(
-			"textures/fallback/normal.png",
+			"default/textures/normal.png",
 			Texture::MetaData(Texture::Channels::RGBA, Texture::ColorSpace::NON_COLOR, true)
 		);
 		material->uniforms["normal_tex"] = ron::make_uniform(fallback_normal);
@@ -243,7 +243,7 @@ static std::shared_ptr<Material> create_material(
 	}
 	else {
 		static const auto fallback_albedo
-			= std::make_shared<Texture>("textures/fallback/white.jpg");
+			= std::make_shared<Texture>("default/textures/white.jpg");
 		material->uniforms["albedo_tex"] = ron::make_uniform(fallback_albedo);
 	}
 
@@ -260,7 +260,7 @@ static std::shared_ptr<Material> create_material(
 	}
 	else {
 		static const auto fallback_metallic_roughness = std::make_shared<Texture>(
-			"textures/fallback/white.jpg",
+			"default/textures/white.jpg",
 			Texture::MetaData(Texture::Channels::RGB, Texture::ColorSpace::NON_COLOR, true)
 		);
 		material->uniforms["metallic_roughness_tex"]

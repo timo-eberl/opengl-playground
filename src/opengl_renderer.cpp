@@ -8,7 +8,7 @@ using namespace ron;
 
 OpenGLRenderer::OpenGLRenderer() {
 	static const std::shared_ptr<ShaderProgram> static_error_shader_program = std::make_shared<ShaderProgram>(
-		"shaders/default/error.vert", "shaders/default/error.frag"
+		"default/shaders/error.vert", "default/shaders/error.frag"
 	);
 	m_error_shader_program = static_error_shader_program;
 	if (!m_shader_programs.contains(m_error_shader_program)) {
@@ -18,7 +18,7 @@ OpenGLRenderer::OpenGLRenderer() {
 	}
 
 	static const std::shared_ptr<ShaderProgram> static_axes_shader_program = std::make_shared<ShaderProgram>(
-		"shaders/default/axes.vert", "shaders/default/axes.frag"
+		"default/shaders/axes.vert", "default/shaders/axes.frag"
 	);
 	m_axes_shader_program = static_axes_shader_program;
 	if (!m_shader_programs.contains(static_axes_shader_program)) {

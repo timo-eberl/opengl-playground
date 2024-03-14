@@ -6,17 +6,17 @@ using namespace ron;
 
 Scene::Scene() : default_material(std::make_shared<Material>()) {
 	default_material->shader_program = std::make_shared<ron::ShaderProgram>(
-		"shaders/default/blinn_phong.vert", "shaders/default/blinn_phong.frag"
+		"default/shaders/blinn_phong.vert", "default/shaders/blinn_phong.frag"
 	);
 	default_material->uniforms["albedo_tex"] = ron::make_uniform(
-		std::make_shared<Texture>("textures/fallback/white.jpg")
+		std::make_shared<Texture>("default/textures/white.jpg")
 	);
 	default_material->uniforms["normal_tex"] = ron::make_uniform(std::make_shared<Texture>(
-		"textures/fallback/normal.png",
+		"default/textures/normal.png",
 		Texture::MetaData(Texture::Channels::RGBA, Texture::ColorSpace::NON_COLOR, true)
 	));
 	default_material->uniforms["metallic_roughness_tex"] = ron::make_uniform(std::make_shared<Texture>(
-		"textures/fallback/white.jpg",
+		"default/textures/white.jpg",
 		Texture::MetaData(Texture::Channels::RGB, Texture::ColorSpace::NON_COLOR, true)
 	));
 	default_material->uniforms["albedo_color"] = make_uniform(glm::vec4(1.0, 1.0, 1.0, 1.0));
