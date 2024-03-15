@@ -124,7 +124,6 @@ static Texture::SampleData create_sample_data(
 static std::shared_ptr<Texture> create_texture(
 	const cgltf_texture_view &gltf_texture_view,
 	std::unordered_map<cgltf_image*, std::shared_ptr<Texture>> &textures,
-	std::unordered_map<std::string, std::shared_ptr<Texture>> &external_textures,
 	std::vector<std::string> &unsupported,
 	const std::string &gltf_path, bool srgb = true
 ) {
@@ -146,7 +145,7 @@ static std::shared_ptr<Texture> create_texture(
 		const unsigned char *raw_data = cgltf_buffer_view_data(image->buffer_view);
 		const int raw_data_len = image->buffer_view->size;
 
-		const auto image_data = Texture::image_data_from_memory(raw_data, raw_data_len, false);
+		const auto image_data = Texture::image_data_from_memory(raw_data, raw_data_len);
 		assert(image_data.data_ptr);
 
 		auto texture = std::make_shared<Texture>(
@@ -154,8 +153,7 @@ static std::shared_ptr<Texture> create_texture(
 			image->name ? image->name : "",
 			Texture::MetaData(
 				Texture::Channels::AUTOMATIC,
-				srgb ? Texture::ColorSpace::SRGB : Texture::ColorSpace::NON_COLOR,
-				false
+				srgb ? Texture::ColorSpace::SRGB : Texture::ColorSpace::NON_COLOR
 			),
 			sample_data
 		);
@@ -163,21 +161,18 @@ static std::shared_ptr<Texture> create_texture(
 		return texture;
 	}
 	else {
-		if (external_textures.contains(image->uri)) {
-			return external_textures[image->uri];
-		}
-
 		const bool path_contains_slash = gltf_path.find('/') != std::string::npos;
 		const auto after_last_slash = path_contains_slash ? (gltf_path.find_last_of('/') + 1) : 0;
 		const auto gltf_location = gltf_path.substr(0, after_last_slash);
 		const auto asset_path = gltf_location + image->uri;
-		const auto texture = std::make_shared<Texture>(asset_path, Texture::MetaData(
-			Texture::Channels::AUTOMATIC,
-			srgb ? Texture::ColorSpace::SRGB : Texture::ColorSpace::NON_COLOR,
-			false
-		), sample_data);
-
-		external_textures.emplace(image->uri, texture);
+		const auto texture = assets::load_texture(
+			asset_path,
+			Texture::MetaData(
+				Texture::Channels::AUTOMATIC,
+				srgb ? Texture::ColorSpace::SRGB : Texture::ColorSpace::NON_COLOR
+			),
+			sample_data
+		);
 
 		return texture;
 	}
@@ -186,7 +181,6 @@ static std::shared_ptr<Texture> create_texture(
 static std::shared_ptr<Material> create_material(
 	cgltf_material *gltf_material,
 	std::unordered_map<cgltf_image*, std::shared_ptr<Texture>> &textures,
-	std::unordered_map<std::string, std::shared_ptr<Texture>> &external_textures,
 	std::unordered_map<cgltf_material*, std::shared_ptr<Material>> &materials,
 	std::vector<std::string> &unsupported,
 	const std::string &gltf_path
@@ -212,14 +206,14 @@ static std::shared_ptr<Material> create_material(
 	const auto &normal_tex = gltf_material->normal_texture;
 	if (normal_tex.texture) {
 		const auto texture = create_texture(
-			normal_tex, textures, external_textures, unsupported, gltf_path, false
+			normal_tex, textures, unsupported, gltf_path, false
 		);
 		material->uniforms["normal_tex"] = make_uniform(texture);
 	}
 	else {
-		static const auto fallback_normal = std::make_shared<Texture>(
+		static const auto fallback_normal = assets::load_texture(
 			"default/textures/normal.png",
-			Texture::MetaData(Texture::Channels::RGBA, Texture::ColorSpace::NON_COLOR, true)
+			Texture::MetaData(Texture::Channels::AUTOMATIC, Texture::ColorSpace::NON_COLOR)
 		);
 		material->uniforms["normal_tex"] = ron::make_uniform(fallback_normal);
 	}
@@ -237,14 +231,14 @@ static std::shared_ptr<Material> create_material(
 	const auto &albedo_tex = gltf_material->pbr_metallic_roughness.base_color_texture;
 	if (albedo_tex.texture) {
 		const auto texture = create_texture(
-			albedo_tex, textures, external_textures, unsupported, gltf_path
+			albedo_tex, textures, unsupported, gltf_path
 		);
 		material->uniforms["albedo_tex"] = make_uniform(texture);
 	}
 	else {
-		static const auto fallback_albedo
-			= std::make_shared<Texture>("default/textures/white.jpg");
-		material->uniforms["albedo_tex"] = ron::make_uniform(fallback_albedo);
+		material->uniforms["albedo_tex"] = ron::make_uniform(
+			assets::load_texture("default/textures/white.jpg")
+		);
 	}
 
 	const auto &metallic_factor = gltf_material->pbr_metallic_roughness.metallic_factor;
@@ -254,17 +248,15 @@ static std::shared_ptr<Material> create_material(
 	const auto &metallic_roughness_tex = gltf_material->pbr_metallic_roughness.metallic_roughness_texture;
 	if (metallic_roughness_tex.texture) {
 		const auto texture = create_texture(
-			metallic_roughness_tex, textures, external_textures, unsupported, gltf_path, false
+			metallic_roughness_tex, textures, unsupported, gltf_path, false
 		);
 		material->uniforms["metallic_roughness_tex"] = make_uniform(texture);
 	}
 	else {
-		static const auto fallback_metallic_roughness = std::make_shared<Texture>(
+		material->uniforms["metallic_roughness_tex"]= ron::make_uniform(assets::load_texture(
 			"default/textures/white.jpg",
-			Texture::MetaData(Texture::Channels::RGB, Texture::ColorSpace::NON_COLOR, true)
-		);
-		material->uniforms["metallic_roughness_tex"]
-			= ron::make_uniform(fallback_metallic_roughness);
+			Texture::MetaData(Texture::Channels::AUTOMATIC, Texture::ColorSpace::NON_COLOR)
+		));
 	}
 
 	materials.emplace(gltf_material, material);
@@ -275,7 +267,6 @@ static std::shared_ptr<Material> create_material(
 static void add_mesh_from_node(
 	cgltf_node *node, Mesh &out_mesh,
 	std::unordered_map<cgltf_image*, std::shared_ptr<Texture>> &textures,
-	std::unordered_map<std::string, std::shared_ptr<Texture>> &external_textures,
 	std::unordered_map<cgltf_material*, std::shared_ptr<Material>> &materials,
 	std::vector<std::string> &unsupported,
 	const std::string &gltf_path
@@ -363,7 +354,7 @@ static void add_mesh_from_node(
 
 		const auto material = primitive.material
 			? create_material(
-				primitive.material, textures, external_textures, materials, unsupported, gltf_path)
+				primitive.material, textures, materials, unsupported, gltf_path)
 			: nullptr;
 
 		out_mesh.sections.push_back(MeshSection(
@@ -376,7 +367,6 @@ static void add_mesh_from_node(
 static void add_all_meshes_from_node_recursive(
 	cgltf_node *node, Scene &scene,
 	std::unordered_map<cgltf_image*, std::shared_ptr<Texture>> &textures,
-	std::unordered_map<std::string, std::shared_ptr<Texture>> &external_textures,
 	std::unordered_map<cgltf_material*, std::shared_ptr<Material>> &materials,
 	std::vector<std::string> &unsupported, const std::string &gltf_path
 ) {
@@ -385,12 +375,12 @@ static void add_all_meshes_from_node_recursive(
 		cgltf_node_transform_world(node, reinterpret_cast<float *>(&node_world_matrix));
 
 		auto mesh = std::make_shared<Mesh>();
-		add_mesh_from_node(node, *mesh, textures, external_textures, materials, unsupported, gltf_path);
+		add_mesh_from_node(node, *mesh, textures, materials, unsupported, gltf_path);
 		scene.add(std::make_shared<MeshNode>(mesh, node_world_matrix));
 	}
 	for (size_t i = 0; i < node->children_count; i++) {
 		add_all_meshes_from_node_recursive(
-			node->children[i], scene, textures, external_textures, materials, unsupported, gltf_path
+			node->children[i], scene, textures, materials, unsupported, gltf_path
 		);
 	}
 }
@@ -433,13 +423,12 @@ Scene gltf::import(const std::string& path) {
 	}
 
 	std::unordered_map<cgltf_image*, std::shared_ptr<Texture>> textures;
-	std::unordered_map<std::string, std::shared_ptr<Texture>> external_textures;
 	std::unordered_map<cgltf_material*, std::shared_ptr<Material>> materials;
 	std::vector<std::string> unsupported_features = {};
 	for (size_t i = 0; i < data->scene->nodes_count; i++) {
 		auto node = data->scene->nodes[i];
 		add_all_meshes_from_node_recursive(
-			node, scene, textures, external_textures, materials, unsupported_features, path
+			node, scene, textures, materials, unsupported_features, path
 		);
 	}
 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <memory>
 
 namespace ron {
 
@@ -26,7 +25,6 @@ public:
 	struct MetaData {
 		Channels channels = AUTOMATIC;
 		ColorSpace color_space = SRGB;
-		bool flip_y = true;
 		static MetaData zero_initializer() { static MetaData zero = {}; return zero; }
 	};
 	struct SampleData {
@@ -38,41 +36,38 @@ public:
 	};
 
 	Texture(
-		const std::string& asset_path, // e.g. "textures/tex.png"
-		const MetaData meta_data = MetaData::zero_initializer(),
-		const SampleData sample_data = SampleData::zero_initializer()
-	);
-	Texture(
-		const ImageData image_data, // can be created with image_data_from_memory
+		const ImageData image_data, // create with image_data_from_memory or image_data_from_file
 		const std::string& name,
 		const MetaData meta_data = MetaData::zero_initializer(),
 		const SampleData sample_data = SampleData::zero_initializer()
 	);
 	~Texture();
-	// forbid copying, because it is unclear if the texture data would be copied over
-	// or read again from the file
+	// forbid copying
+	// todo implement copying
 	Texture(const Texture&) = delete;
 	Texture &operator=(const Texture&) = delete;
 
 	static ImageData image_data_from_memory(
-		const unsigned char *memory, const int len, const bool flip = true
+		const unsigned char *memory, const int len
 	);
+
+	static ImageData image_data_from_file(
+		const std::string &absolute_path
+	);
+
+	const std::string name;
 
 	bool good() const; // true if texture is valid
 	unsigned int get_update_count() const;
-	void reload_from_file();
 
 	ImageData image_data;
 	MetaData meta_data;
 	SampleData sample_data;
 
-	const bool has_file;
-	const std::string asset_path;
-	const std::string name;
+	void update(const ImageData image_data);
+	void mark_as_updated(); // call this after modifying image_data
 private:
 	unsigned int m_update_count = 0;
-
-	void load_from_file();
 };
 
 } // ron

@@ -98,7 +98,7 @@ void create_scene(State& state) {
 	// copy the default material and modify it
 	const auto tex_mat = std::make_shared<ron::Material>(*state.scene.default_material);
 	tex_mat->uniforms["albedo_tex"] = ron::make_uniform(
-		std::make_shared<ron::Texture>("textures/container.jpg")
+		assets::load_texture("textures/awesomeface.png")
 	);
 
 	state.scene.add(ron::gltf::import("models/antique_camera/antique_camera.glb"));
@@ -106,9 +106,9 @@ void create_scene(State& state) {
 	// state.scene.add(ron::gltf::import("models/gravel_torus/gravel_torus_without_tangents.glb"));
 	// state.scene.add(ron::gltf::import("default/models/cube/cube.gltf"));
 
-	// const auto cube = ron::gltf::import("default/models/cube/cube.gltf").get_mesh_nodes()[0];
-	// cube->get_mesh()->sections[0].material = tex_mat;
-	// state.scene.add(cube);
+	const auto cube = ron::gltf::import("default/models/cube/cube.gltf").get_mesh_nodes()[0];
+	cube->get_mesh()->sections[0].material = tex_mat;
+	state.scene.add(cube);
 
 	state.renderer.preload(state.scene);
 }
@@ -136,7 +136,7 @@ void process(GLFWwindow* window, State& state) {
 
 	if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS) {
 		assets::reload_shader_programs();
-		state.scene.reload_all_textures();
+		assets::reload_textures();
 	}
 }
 
