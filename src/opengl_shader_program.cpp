@@ -34,7 +34,7 @@ OpenGLShaderProgramGPUData ron::opengl_setup_shader_program(const ShaderProgram 
 	if (!vertex_compilation_success) {
 		log::error(
 			std::string("Vertex shader compilation failed (")
-			+ shader_program.vertex_shader_path + "):" , false
+			+ shader_program.name + "):" , false
 		);
 		log::error(message);
 	}
@@ -47,7 +47,7 @@ OpenGLShaderProgramGPUData ron::opengl_setup_shader_program(const ShaderProgram 
 	if (!fragment_compilation_success) {
 		log::error(
 			std::string("Fragment shader compilation failed (")
-			+ shader_program.fragment_shader_path + "):" , false
+			+ shader_program.name + "):" , false
 		);
 		log::error(message);
 	}
@@ -76,8 +76,7 @@ OpenGLShaderProgramGPUData ron::opengl_setup_shader_program(const ShaderProgram 
 
 		log::error(
 			std::string("Linking shader program failed (")
-			+ shader_program.vertex_shader_path + ", "
-			+ shader_program.fragment_shader_path + "):" , false
+			+ shader_program.name + "):" , false
 		);
 		log::error(std::string(message));
 

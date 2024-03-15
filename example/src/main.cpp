@@ -36,7 +36,7 @@ int main() {
 
 	GLFWwindow* window = glfwCreateWindow(1300, 900, "Ron", NULL, NULL);
 	if (window == NULL) {
-		std::cout << "Failed to create GLFW window" << std::endl;
+		log::error("Failed to create GLFW window");
 		glfwTerminate();
 		return -1;
 	}
@@ -130,11 +130,12 @@ void initialize(GLFWwindow* window, State& state) {
 void process(GLFWwindow* window, State& state) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
+		return;
 	}
 	state.camera_controls->update(*window, *state.camera);
 
 	if (glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS) {
-		state.scene.reload_all_shaders();
+		assets::reload_shader_programs();
 		state.scene.reload_all_textures();
 	}
 }
@@ -145,6 +146,7 @@ void render(GLFWwindow* window, State& state) {
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	auto state = static_cast<State *>(glfwGetWindowUserPointer(window));
+	assert(state);
 
 	glViewport(0, 0, width, height);
 

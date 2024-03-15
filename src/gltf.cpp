@@ -9,6 +9,7 @@
 #include <cassert>
 #include <unordered_map>
 
+#include "assets.h"
 #include "log.h"
 
 #define ASSETS_DIR _ASSETS_DIR
@@ -200,10 +201,9 @@ static std::shared_ptr<Material> create_material(
 	}
 
 	const auto material = std::make_shared<Material>();
-	static const auto shader_program = std::make_shared<ShaderProgram>(
+	material->shader_program = assets::load_shader_program(
 		"default/shaders/blinn_phong.vert", "default/shaders/blinn_phong.frag"
 	);
-	material->shader_program = shader_program;
 
 	if (gltf_material->double_sided) {
 		material->culling_mode = Material::CullingMode::NONE;

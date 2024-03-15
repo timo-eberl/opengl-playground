@@ -2,29 +2,28 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "assets.h"
 #include "log.h"
 
 using namespace ron;
 
 OpenGLRenderer::OpenGLRenderer() {
-	static const std::shared_ptr<ShaderProgram> static_error_shader_program = std::make_shared<ShaderProgram>(
+	m_error_shader_program = assets::load_shader_program(
 		"default/shaders/error.vert", "default/shaders/error.frag"
 	);
-	m_error_shader_program = static_error_shader_program;
 	if (!m_shader_programs.contains(m_error_shader_program)) {
 		auto error_shader_program_gpu_data = opengl_setup_shader_program(*m_error_shader_program);
 		assert(error_shader_program_gpu_data.id != 0);
 		m_shader_programs.emplace(m_error_shader_program, error_shader_program_gpu_data);
 	}
 
-	static const std::shared_ptr<ShaderProgram> static_axes_shader_program = std::make_shared<ShaderProgram>(
+	m_axes_shader_program = assets::load_shader_program(
 		"default/shaders/axes.vert", "default/shaders/axes.frag"
 	);
-	m_axes_shader_program = static_axes_shader_program;
-	if (!m_shader_programs.contains(static_axes_shader_program)) {
-		auto axes_shader_program_gpu_data = opengl_setup_shader_program(*static_axes_shader_program);
+	if (!m_shader_programs.contains(m_axes_shader_program)) {
+		auto axes_shader_program_gpu_data = opengl_setup_shader_program(*m_axes_shader_program);
 		assert(axes_shader_program_gpu_data.id != 0);
-		m_shader_programs.emplace(static_axes_shader_program, axes_shader_program_gpu_data);
+		m_shader_programs.emplace(m_axes_shader_program, axes_shader_program_gpu_data);
 	}
 }
 
@@ -190,8 +189,7 @@ const OpenGLShaderProgramGPUData & OpenGLRenderer::get_shader_program_gpu_data(
 	if (!m_shader_programs.contains(shader_program)) {
 		log::warn(
 			std::string("GPU Data of ShaderProgram ")
-			+ shader_program->vertex_shader_path + ", "
-			+ shader_program->fragment_shader_path + "not found."
+			+ shader_program->name + "not found."
 			+ " Consider preloading before rendering."
 		);
 		preload(shader_program);
