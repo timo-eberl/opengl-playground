@@ -41,6 +41,8 @@ public:
 
 	void render();
 private:
+	const int m_distance = 210; // how far the axes will be rendered
+
 	GLuint m_vertex_array = 0;
 	GLuint m_positions_buffer = 0;
 	GLuint m_color_buffer = 0;
@@ -56,6 +58,9 @@ public:
 
 	void render();
 private:
+	// draw lines for m_distance units in one direction -> 4 * m_distance lines drawn in total
+	const int m_distance = 210;
+
 	GLuint m_vertex_array = 0;
 	GLuint m_positions_buffer = 0;
 	GLuint m_color_buffer = 0;
@@ -66,7 +71,8 @@ public:
 	OpenGLRenderer();
 
 	bool auto_clear = true;
-	bool render_axes = true;
+	bool render_axes = false;
+	bool render_grid = false;
 	void set_clear_color(glm::vec4 clear_color);
 
 	void preload(const Scene &scene);
@@ -85,9 +91,11 @@ public:
 private:
 	glm::vec4 m_clear_color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	ron::OpenGLAxesRenderer m_axes_renderer = {};
+	ron::OpenGLGridRenderer m_grid_renderer = {};
 	// shader programs that will always be preloaded
 	std::shared_ptr<ShaderProgram> m_error_shader_program = {};
 	std::shared_ptr<ShaderProgram> m_axes_shader_program = {};
+	std::shared_ptr<ShaderProgram> m_grid_shader_program = {};
 	// OpenGL specific data
 	std::unordered_map<std::shared_ptr<ShaderProgram>, OpenGLShaderProgramGPUData> m_shader_programs = {};
 	std::unordered_map<std::shared_ptr<Geometry>, OpenGLGeometryGPUData> m_geometries = {};

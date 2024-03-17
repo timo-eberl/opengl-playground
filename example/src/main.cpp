@@ -110,6 +110,9 @@ void create_scene(State& state) {
 	cube->get_mesh()->sections[0].material = tex_mat;
 	state.scene.add(cube);
 
+	state.renderer.render_axes = true;
+	state.renderer.render_grid = true;
+
 	state.renderer.preload(state.scene);
 }
 

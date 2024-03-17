@@ -15,9 +15,9 @@ OpenGLAxesRenderer::OpenGLAxesRenderer() {
 
 	// positions
 	const GLfloat positions_buffer [] = {
-		-10000.0f, 0.0f, 0.0f,    10000.0f, 0.0f, 0.0f, // x
-		0.0f, -10000.0f, 0.0f,    0.0f, 10000.0f, 0.0f, // y
-		0.0f, 0.0f, -10000.0f,    0.0f, 0.0f, 10000.0f, // z
+		-m_distance, 0.0f, 0.0f,    m_distance, 0.0f, 0.0f, // x
+		0.0f, -m_distance, 0.0f,    0.0f, m_distance, 0.0f, // y
+		0.0f, 0.0f, -m_distance,    0.0f, 0.0f, m_distance, // z
 	};
 	glGenBuffers(1, &m_positions_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, m_positions_buffer);
@@ -63,5 +63,4 @@ void OpenGLAxesRenderer::render() {
 
 	// unbind to avoid accidental modification
 	glBindVertexArray(0);
-	glUseProgram(0);
 }

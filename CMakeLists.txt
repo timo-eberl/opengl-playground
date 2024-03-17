@@ -59,6 +59,7 @@ endif()
 		src/opengl_geometry.cpp
 		src/opengl_texture.cpp
 		src/opengl_axes_renderer.cpp
+		src/opengl_grid_renderer.cpp
 		src/assets.cpp
 		src/tangent_generation.cpp
 	)

@@ -25,6 +25,15 @@ OpenGLRenderer::OpenGLRenderer() {
 		assert(axes_shader_program_gpu_data.id != 0);
 		m_shader_programs.emplace(m_axes_shader_program, axes_shader_program_gpu_data);
 	}
+
+	m_grid_shader_program = assets::load_shader_program(
+		"default/shaders/grid.vert", "default/shaders/grid.frag"
+	);
+	if (!m_shader_programs.contains(m_grid_shader_program)) {
+		auto grid_shader_program_gpu_data = opengl_setup_shader_program(*m_grid_shader_program);
+		assert(grid_shader_program_gpu_data.id != 0);
+		m_shader_programs.emplace(m_grid_shader_program, grid_shader_program_gpu_data);
+	}
 }
 
 void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
@@ -109,6 +118,23 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
 		opengl_set_shader_program_uniforms(shader_program_gpu_data, scene.global_uniforms);
 
 		m_axes_renderer.render();
+
+		glUseProgram(0);
+	}
+
+	if (render_grid) {
+		const OpenGLShaderProgramGPUData &shader_program_gpu_data
+			= get_shader_program_gpu_data(m_grid_shader_program);
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		glUseProgram(shader_program_gpu_data.id);
+		opengl_set_shader_program_uniforms(shader_program_gpu_data, scene.global_uniforms);
+
+		m_grid_renderer.render();
+
+		glUseProgram(0);
 	}
 }
 
