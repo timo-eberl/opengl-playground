@@ -13,12 +13,6 @@ OpenGLAxesRenderer::OpenGLAxesRenderer() {
 	glGenVertexArrays(1, &m_vertex_array);
 	glBindVertexArray(m_vertex_array);
 
-	// indices
-	const GLuint indices_buffer [] = { 0,1,2,3,4,5 };
-	glGenBuffers(1, &m_indices_buffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indices_buffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices_buffer), indices_buffer, GL_STATIC_DRAW);
-
 	// positions
 	const GLfloat positions_buffer [] = {
 		-10000.0f, 0.0f, 0.0f,    10000.0f, 0.0f, 0.0f, // x
@@ -53,7 +47,6 @@ OpenGLAxesRenderer::OpenGLAxesRenderer() {
 
 OpenGLAxesRenderer::~OpenGLAxesRenderer() {
 	glDeleteBuffers(1, &m_positions_buffer);
-	glDeleteBuffers(1, &m_indices_buffer);
 	glDeleteBuffers(1, &m_color_buffer);
 
 	glDeleteVertexArrays(1, &m_vertex_array);
@@ -66,7 +59,7 @@ void OpenGLAxesRenderer::render() {
 
 	glBindVertexArray(m_vertex_array);
 	glLineWidth(2.0f);
-	glDrawElements(GL_LINES, 6, GL_UNSIGNED_INT, 0);
+	glDrawArrays(GL_LINES, 0, 6);
 
 	// unbind to avoid accidental modification
 	glBindVertexArray(0);

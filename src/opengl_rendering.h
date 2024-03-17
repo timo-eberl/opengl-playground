@@ -42,7 +42,21 @@ public:
 	void render();
 private:
 	GLuint m_vertex_array = 0;
-	GLuint m_indices_buffer = 0;
+	GLuint m_positions_buffer = 0;
+	GLuint m_color_buffer = 0;
+};
+
+class OpenGLGridRenderer {
+public:
+	OpenGLGridRenderer();
+	~OpenGLGridRenderer();
+	// forbid copying, because it would be probably not what we want
+	OpenGLGridRenderer(const OpenGLGridRenderer&) = delete;
+	OpenGLGridRenderer &operator=(const OpenGLGridRenderer&) = delete;
+
+	void render();
+private:
+	GLuint m_vertex_array = 0;
 	GLuint m_positions_buffer = 0;
 	GLuint m_color_buffer = 0;
 };

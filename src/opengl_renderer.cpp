@@ -86,6 +86,7 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
 			const auto &geometry_gpu_data = get_geometry_gpu_data(mesh_section.geometry);
 			assert(geometry_gpu_data.vertex_array != 0);
 
+			glDisable(GL_BLEND);
 			glEnable(GL_FRAMEBUFFER_SRGB);
 			glBindVertexArray(geometry_gpu_data.vertex_array);
 			glDrawElements(GL_TRIANGLES, mesh_section.geometry->indices.size(), GL_UNSIGNED_INT, NULL);
@@ -100,6 +101,9 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
 	if (render_axes) {
 		const OpenGLShaderProgramGPUData &shader_program_gpu_data
 			= get_shader_program_gpu_data(m_axes_shader_program);
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		glUseProgram(shader_program_gpu_data.id);
 		opengl_set_shader_program_uniforms(shader_program_gpu_data, scene.global_uniforms);
