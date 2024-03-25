@@ -8,6 +8,7 @@ OpenGL 3D Rendering library written in C++
 - [x] glTF 2.0 Import
 - [x] Render multiple scenes
 - [x] Tangent Generation
+- [x] Shader and texture hot reload
 - [ ] Multiple, configurable Lights
 - [ ] PBR Lighting
 - [ ] Emissive materials
