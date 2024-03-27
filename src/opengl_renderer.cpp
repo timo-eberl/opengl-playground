@@ -274,7 +274,7 @@ const OpenGLTextureGPUData & OpenGLRenderer::get_texture_gpu_data(
 void OpenGLRenderer::opengl_set_shader_program_uniforms(
 	const OpenGLShaderProgramGPUData &program_gpu_data, const Uniforms &uniforms
 ) {
-	uint texture_unit_offset = 0; // texture count
+	unsigned int texture_unit_offset = 0; // texture count
 
 	for (const auto &[name, uniform] : uniforms) {
 		auto location = glGetUniformLocation(program_gpu_data.id, name.c_str());

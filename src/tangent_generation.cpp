@@ -67,9 +67,13 @@ int get_num_faces(const SMikkTSpaceContext *context) {
 	return geometry.indices.size() / 3;
 }
 
-// mark parameters as unused to suppress warnings
 int get_num_vertices_of_face(
-	const SMikkTSpaceContext *context __attribute__((unused)), int face_idx __attribute__((unused))
+#if defined(__GNUC__)
+	// mark parameters as unused to suppress warnings
+	const SMikkTSpaceContext* context __attribute__((unused)), int face_idx __attribute__((unused))
+#else
+	const SMikkTSpaceContext* context, int face_idx
+#endif
 ) {
 	return 3;
 }

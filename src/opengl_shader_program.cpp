@@ -6,7 +6,7 @@ using namespace ron;
 
 static GLuint compile_shader(
 	const std::string & source, const GLenum shader_type,
-	GLint *was_successful, GLchar *message, const uint message_size
+	GLint *was_successful, GLchar *message, const unsigned int message_size
 ) {
 	GLuint shader = glCreateShader(shader_type);
 
@@ -23,7 +23,7 @@ static GLuint compile_shader(
 }
 
 OpenGLShaderProgramGPUData ron::opengl_setup_shader_program(const ShaderProgram &shader_program) {
-	const uint message_size = 1024;
+	const unsigned int message_size = 1024;
 	GLchar message[message_size];
 
 	GLint vertex_compilation_success = false;
@@ -70,7 +70,7 @@ OpenGLShaderProgramGPUData ron::opengl_setup_shader_program(const ShaderProgram 
 	glGetProgramiv(program_id, GL_LINK_STATUS, &linkage_success);
 
 	if (!linkage_success) {
-		const uint message_size = 1024;
+		const unsigned int message_size = 1024;
 		GLchar message[message_size];
 		glGetProgramInfoLog(program_id, message_size, NULL, message);
 

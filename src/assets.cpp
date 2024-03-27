@@ -98,14 +98,13 @@ struct TextureIdentifier {
 
 	// implement < so it can be used as a key in std::map
 	bool operator<(const TextureIdentifier& rhs) const {
-		return
-			asset_path < rhs.asset_path
-			|| meta_data.channels < rhs.meta_data.channels
-			|| meta_data.color_space < rhs.meta_data.color_space
-			|| sample_data.mag_filter < rhs.sample_data.mag_filter
-			|| sample_data.min_filter < rhs.sample_data.min_filter
-			|| sample_data.wrap_mode_s < rhs.sample_data.wrap_mode_s
-			|| sample_data.wrap_mode_t < rhs.sample_data.wrap_mode_t;
+		if (asset_path != rhs.asset_path) { return asset_path < rhs.asset_path; }
+		if (meta_data.channels != rhs.meta_data.channels) { return meta_data.channels < rhs.meta_data.channels; }
+		if (meta_data.color_space != rhs.meta_data.color_space) { return meta_data.color_space < rhs.meta_data.color_space; }
+		if (sample_data.mag_filter != rhs.sample_data.mag_filter) { return sample_data.mag_filter < rhs.sample_data.mag_filter; }
+		if (sample_data.min_filter != rhs.sample_data.min_filter) { return sample_data.min_filter < rhs.sample_data.min_filter; }
+		if (sample_data.wrap_mode_s != rhs.sample_data.wrap_mode_s) { return sample_data.wrap_mode_s < rhs.sample_data.wrap_mode_s; }
+		return sample_data.wrap_mode_t < rhs.sample_data.wrap_mode_t;
 	}
 };
 
