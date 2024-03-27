@@ -16,7 +16,7 @@ OpenGLGridRenderer::OpenGLGridRenderer() {
 	// positions
 	auto positions_buffer = std::vector<glm::vec3>();
 	positions_buffer.reserve(8 * m_distance);
-	for (unsigned int i = 0; i < m_distance; i++) {
+	for (int i = 0; i < m_distance; i++) {
 		positions_buffer.push_back(glm::vec3( m_distance, 0,  i));
 		positions_buffer.push_back(glm::vec3(-m_distance, 0,  i));
 		positions_buffer.push_back(glm::vec3( m_distance, 0, -i));
@@ -40,7 +40,7 @@ OpenGLGridRenderer::OpenGLGridRenderer() {
 	// colors
 	auto colors_buffer = std::vector<glm::vec3>();
 	colors_buffer.reserve(8 * m_distance);
-	for (size_t i = 0; i < m_distance; i++) {
+	for (int i = 0; i < m_distance; i++) {
 		const auto brightness = (i % 10 == 0) ? 0.34f : 0.29f;
 		colors_buffer.push_back(glm::vec3(brightness));
 		colors_buffer.push_back(glm::vec3(brightness));
