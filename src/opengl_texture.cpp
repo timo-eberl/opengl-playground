@@ -76,10 +76,6 @@ OpenGLTextureGPUData ron::opengl_setup_texture(const Texture &texture) {
 		case Texture::MAG_LINEAR: mag_filter = GL_LINEAR; break;
 		default: assert(false); break;
 	};
-	const auto gdsgafdasd1 = GL_RGB;
-	const auto gdsgafdasd2 = GL_RGBA;
-	const auto gdsgafdasd3 = GL_SRGB;
-	const auto gdsgafdasd4 = GL_SRGB_ALPHA;
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glGenTextures(1, &gpu_data.id);
 	// the texture unit here does not need to match the texture unit when binding the texture later

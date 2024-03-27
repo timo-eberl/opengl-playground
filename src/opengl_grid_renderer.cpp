@@ -16,7 +16,7 @@ OpenGLGridRenderer::OpenGLGridRenderer() {
 	// positions
 	auto positions_buffer = std::vector<glm::vec3>();
 	positions_buffer.reserve(8 * m_distance);
-	for (int i = 0; i < m_distance; i++) {
+	for (unsigned int i = 0; i < m_distance; i++) {
 		positions_buffer.push_back(glm::vec3( m_distance, 0,  i));
 		positions_buffer.push_back(glm::vec3(-m_distance, 0,  i));
 		positions_buffer.push_back(glm::vec3( m_distance, 0, -i));

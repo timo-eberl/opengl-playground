@@ -29,7 +29,7 @@ std::string assets::read_text_file(const std::string& asset_path) {
 		file_content = ss.str();
 
 		ifstream.close();
-	} catch (std::ifstream::failure e) {
+	} catch (std::ifstream::failure &e) {
 		log::error(
 			std::string("Exception opening/reading/closing file \"")
 			+ complete_path + "\": " + std::strerror(errno)

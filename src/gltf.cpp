@@ -38,7 +38,7 @@ static void extract_attributes(
 	}
 }
 
-static bool is_primitive_valid(const cgltf_primitive &primitive, cgltf_node *node, std::vector<std::string> &unsupported) {
+static bool is_primitive_valid(const cgltf_primitive &primitive, std::vector<std::string> &unsupported) {
 	if (primitive.type != cgltf_primitive_type_triangles) {
 		unsupported.push_back("Mesh type other than primitive triangles");
 	}
@@ -82,11 +82,9 @@ static bool is_primitive_valid(const cgltf_primitive &primitive, cgltf_node *nod
 	return unsupported.size() == 0;
 }
 
-static Texture::SampleData create_sample_data(
-	const cgltf_sampler &sampler, std::vector<std::string> &unsupported
-) {
+static Texture::SampleData create_sample_data(const cgltf_sampler &sampler) {
 	Texture::SampleData sample_data = {};
-	
+
 	switch (sampler.wrap_s) {
 		case GL_CLAMP_TO_EDGE: sample_data.wrap_mode_s = Texture::CLAMP_TO_EDGE; break;
 		case GL_CLAMP_TO_BORDER: sample_data.wrap_mode_s = Texture::CLAMP_TO_BORDER; break;
@@ -138,7 +136,7 @@ static std::shared_ptr<Texture> create_texture(
 	const auto image = gltf_texture_view.texture->image;
 
 	const auto sample_data = gltf_texture_view.texture->sampler
-		? create_sample_data(*gltf_texture_view.texture->sampler, unsupported)
+		? create_sample_data(*gltf_texture_view.texture->sampler)
 		: Texture::SampleData();
 
 	if (image->buffer_view) {
@@ -219,12 +217,6 @@ static std::shared_ptr<Material> create_material(
 	}
 
 	const auto &albedo_color = gltf_material->pbr_metallic_roughness.base_color_factor;
-	auto flkadsj = glm::vec4(
-		albedo_color[0], albedo_color[1], albedo_color[2], albedo_color[3]
-	);
-	auto flkdsjalkfjdk = glm::vec4(
-		0.076, 0.037, 0.024, 1.0
-	);
 	material->uniforms["albedo_color"] = make_uniform(glm::vec4(
 		albedo_color[0], albedo_color[1], albedo_color[2], albedo_color[3]
 	));
@@ -275,7 +267,7 @@ static void add_mesh_from_node(
 		auto primitive = node->mesh->primitives[i];
 
 		std::vector<std::string> unsupported_new;
-		if (!is_primitive_valid(primitive, node, unsupported_new)) {
+		if (!is_primitive_valid(primitive, unsupported_new)) {
 			for (auto &new_error : unsupported_new) {
 				const auto node_name = node->name ? node->name : "";
 				const auto mesh_name = node->mesh->name ? node->mesh->name : "";
@@ -291,9 +283,12 @@ static void add_mesh_from_node(
 		switch (primitive.indices->component_type) {
 			case cgltf_component_type_r_16u: { // unsigned short / uint16_t
 				// read uint16_t values
-				uint16_t indices_buffer [primitive.indices->count];
+
+				std::vector<uint16_t> indices_buffer;
+				indices_buffer.resize(primitive.indices->count);
+
 				cgltf_accessor_unpack_indices(
-					primitive.indices, indices_buffer, sizeof(uint16_t), primitive.indices->count
+					primitive.indices, indices_buffer.data(), sizeof(uint16_t), primitive.indices->count
 				);
 				// insert into geometry data -> automatically convert to uint32_t
 				geometry.indices.reserve(primitive.indices->count);
@@ -306,6 +301,7 @@ static void add_mesh_from_node(
 					primitive.indices, geometry.indices.data(), sizeof(uint32_t), primitive.indices->count
 				);
 			} break;
+			default: assert(false);
 		}
 
 		cgltf_accessor *pos_attribute = nullptr;

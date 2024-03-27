@@ -59,7 +59,7 @@ public:
 	void render();
 private:
 	// draw lines for m_distance units in one direction -> 4 * m_distance lines drawn in total
-	const int m_distance = 210;
+	const unsigned int m_distance = 210;
 
 	GLuint m_vertex_array = 0;
 	GLuint m_positions_buffer = 0;

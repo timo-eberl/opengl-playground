@@ -26,7 +26,7 @@ public:
 	virtual ~IUniform() {}
 
 	virtual const void *value_ptr() const = 0;
-	virtual const UniformType get_type() const = 0;
+	virtual UniformType get_type() const = 0;
 };
 
 typedef std::map<const std::string, std::shared_ptr<IUniform>> Uniforms;
@@ -36,7 +36,7 @@ public:
 	TextureUniform(std::shared_ptr<Texture> tex) : texture(tex) {}
 	virtual ~TextureUniform() {}
 	virtual const void *value_ptr() const override { return reinterpret_cast<const void *>(&texture); }
-	virtual const UniformType get_type() const { return TEXTURE; }
+	virtual UniformType get_type() const { return TEXTURE; }
 	std::shared_ptr<Texture> texture;
 };
 
@@ -45,7 +45,7 @@ public:
 	Float1Uniform(glm::vec1 v) : value(v) {}
 	virtual ~Float1Uniform() {}
 	virtual const void *value_ptr() const override { return reinterpret_cast<const void *>(&value); }
-	virtual const UniformType get_type() const { return FLOAT1; }
+	virtual UniformType get_type() const { return FLOAT1; }
 	glm::vec1 value;
 };
 
@@ -54,7 +54,7 @@ public:
 	Float2Uniform(glm::vec2 v) : value(v) {}
 	virtual ~Float2Uniform() {}
 	virtual const void *value_ptr() const override { return reinterpret_cast<const void *>(&value); }
-	virtual const UniformType get_type() const { return FLOAT2; }
+	virtual UniformType get_type() const { return FLOAT2; }
 	glm::vec2 value;
 };
 
@@ -63,7 +63,7 @@ public:
 	Float3Uniform(glm::vec3 v) : value(v) {}
 	virtual ~Float3Uniform() {}
 	virtual const void *value_ptr() const override { return reinterpret_cast<const void *>(&value); }
-	virtual const UniformType get_type() const { return FLOAT3; }
+	virtual UniformType get_type() const { return FLOAT3; }
 	glm::vec3 value;
 };
 
@@ -72,7 +72,7 @@ public:
 	Float4Uniform(glm::vec4 v) : value(v) {}
 	virtual ~Float4Uniform() {}
 	virtual const void *value_ptr() const override { return reinterpret_cast<const void *>(&value); }
-	virtual const UniformType get_type() const { return FLOAT4; }
+	virtual UniformType get_type() const { return FLOAT4; }
 	glm::vec4 value;
 };
 
@@ -81,7 +81,7 @@ public:
 	Int1Uniform(glm::ivec1 v) : value(v) {}
 	virtual ~Int1Uniform() {}
 	virtual const void *value_ptr() const override { return reinterpret_cast<const void *>(&value); }
-	virtual const UniformType get_type() const { return INT1; }
+	virtual UniformType get_type() const { return INT1; }
 	glm::ivec1 value;
 };
 
@@ -90,7 +90,7 @@ public:
 	Int2Uniform(glm::ivec2 v) : value(v) {}
 	virtual ~Int2Uniform() {}
 	virtual const void *value_ptr() const override { return reinterpret_cast<const void *>(&value); }
-	virtual const UniformType get_type() const { return INT2; }
+	virtual UniformType get_type() const { return INT2; }
 	glm::ivec2 value;
 };
 
@@ -99,7 +99,7 @@ public:
 	Int3Uniform(glm::ivec3 v) : value(v) {}
 	virtual ~Int3Uniform() {}
 	virtual const void *value_ptr() const override { return reinterpret_cast<const void *>(&value); }
-	virtual const UniformType get_type() const { return INT3; }
+	virtual UniformType get_type() const { return INT3; }
 	glm::ivec3 value;
 };
 
@@ -108,7 +108,7 @@ public:
 	Int4Uniform(glm::ivec4 v) : value(v) {}
 	virtual ~Int4Uniform() {}
 	virtual const void *value_ptr() const override { return reinterpret_cast<const void *>(&value); }
-	virtual const UniformType get_type() const { return INT4; }
+	virtual UniformType get_type() const { return INT4; }
 	glm::ivec4 value;
 };
 
@@ -117,7 +117,7 @@ public:
 	UInt1Uniform(glm::uvec1 v) : value(v) {}
 	virtual ~UInt1Uniform() {}
 	virtual const void *value_ptr() const override { return reinterpret_cast<const void *>(&value); }
-	virtual const UniformType get_type() const { return UINT1; }
+	virtual UniformType get_type() const { return UINT1; }
 	glm::uvec1 value;
 };
 
@@ -126,7 +126,7 @@ public:
 	UInt2Uniform(glm::uvec2 v) : value(v) {}
 	virtual ~UInt2Uniform() {}
 	virtual const void *value_ptr() const override { return reinterpret_cast<const void *>(&value); }
-	virtual const UniformType get_type() const { return UINT2; }
+	virtual UniformType get_type() const { return UINT2; }
 	glm::uvec2 value;
 };
 
@@ -135,7 +135,7 @@ public:
 	UInt3Uniform(glm::uvec3 v) : value(v) {}
 	virtual ~UInt3Uniform() {}
 	virtual const void *value_ptr() const override { return reinterpret_cast<const void *>(&value); }
-	virtual const UniformType get_type() const { return UINT3; }
+	virtual UniformType get_type() const { return UINT3; }
 	glm::uvec3 value;
 };
 
@@ -144,7 +144,7 @@ public:
 	UInt4Uniform(glm::uvec4 v) : value(v) {}
 	virtual ~UInt4Uniform() {}
 	virtual const void *value_ptr() const override { return reinterpret_cast<const void *>(&value); }
-	virtual const UniformType get_type() const { return UINT4; }
+	virtual UniformType get_type() const { return UINT4; }
 	glm::uvec4 value;
 };
 
@@ -153,7 +153,7 @@ public:
 	Mat2Uniform(glm::mat2 v) : value(v) {}
 	virtual ~Mat2Uniform() {}
 	virtual const void *value_ptr() const override { return reinterpret_cast<const void *>(&value); }
-	virtual const UniformType get_type() const { return MAT2; }
+	virtual UniformType get_type() const { return MAT2; }
 	glm::mat2 value;
 };
 
@@ -162,7 +162,7 @@ public:
 	Mat3Uniform(glm::mat3 v) : value(v) {}
 	virtual ~Mat3Uniform() {}
 	virtual const void *value_ptr() const override { return reinterpret_cast<const void *>(&value); }
-	virtual const UniformType get_type() const { return MAT3; }
+	virtual UniformType get_type() const { return MAT3; }
 	glm::mat3 value;
 };
 
@@ -171,7 +171,7 @@ public:
 	Mat4Uniform(glm::mat4 v) : value(v) {}
 	virtual ~Mat4Uniform() {}
 	virtual const void *value_ptr() const override { return reinterpret_cast<const void *>(&value); }
-	virtual const UniformType get_type() const { return MAT4; }
+	virtual UniformType get_type() const { return MAT4; }
 	glm::mat4 value;
 };
 
@@ -180,7 +180,7 @@ public:
 	Mat2x3Uniform(glm::mat2x3 v) : value(v) {}
 	virtual ~Mat2x3Uniform() {}
 	virtual const void *value_ptr() const override { return reinterpret_cast<const void *>(&value); }
-	virtual const UniformType get_type() const { return MAT2X3; }
+	virtual UniformType get_type() const { return MAT2X3; }
 	glm::mat2x3 value;
 };
 
@@ -189,7 +189,7 @@ public:
 	Mat3x2Uniform(glm::mat3x2 v) : value(v) {}
 	virtual ~Mat3x2Uniform() {}
 	virtual const void *value_ptr() const override { return reinterpret_cast<const void *>(&value); }
-	virtual const UniformType get_type() const { return MAT3X2; }
+	virtual UniformType get_type() const { return MAT3X2; }
 	glm::mat3x2 value;
 };
 
@@ -198,7 +198,7 @@ public:
 	Mat2x4Uniform(glm::mat2x4 v) : value(v) {}
 	virtual ~Mat2x4Uniform() {}
 	virtual const void *value_ptr() const override { return reinterpret_cast<const void *>(&value); }
-	virtual const UniformType get_type() const { return MAT2X4; }
+	virtual UniformType get_type() const { return MAT2X4; }
 	glm::mat2x4 value;
 };
 
@@ -207,7 +207,7 @@ public:
 	Mat4x2Uniform(glm::mat4x2 v) : value(v) {}
 	virtual ~Mat4x2Uniform() {}
 	virtual const void *value_ptr() const override { return reinterpret_cast<const void *>(&value); }
-	virtual const UniformType get_type() const { return MAT4X2; }
+	virtual UniformType get_type() const { return MAT4X2; }
 	glm::mat4x2 value;
 };
 
@@ -216,7 +216,7 @@ public:
 	Mat3x4Uniform(glm::mat3x4 v) : value(v) {}
 	virtual ~Mat3x4Uniform() {}
 	virtual const void *value_ptr() const override { return reinterpret_cast<const void *>(&value); }
-	virtual const UniformType get_type() const { return MAT3X4; }
+	virtual UniformType get_type() const { return MAT3X4; }
 	glm::mat3x4 value;
 };
 
@@ -225,7 +225,7 @@ public:
 	Mat4x3Uniform(glm::mat4x3 v) : value(v) {}
 	virtual ~Mat4x3Uniform() {}
 	virtual const void *value_ptr() const override { return reinterpret_cast<const void *>(&value); }
-	virtual const UniformType get_type() const { return MAT4X3; }
+	virtual UniformType get_type() const { return MAT4X3; }
 	glm::mat4x3 value;
 };
 

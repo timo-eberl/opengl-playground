@@ -60,6 +60,7 @@ void CameraViewportControls::update(GLFWwindow& window, ICamera &camera) {
 			m_target += movement_3d_world;
 			m_dirty = true;
 		} break;
+		case IDLE: break;
 	}
 
 	m_previous_control_mode = control_mode;

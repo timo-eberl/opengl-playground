@@ -10,7 +10,7 @@ ShaderProgram::ShaderProgram(
 	const std::string& vertex_shader_source, const std::string& fragment_shader_source,
 	const std::string& name
 )
-	: m_vertex_source(vertex_shader_source), m_fragment_source(fragment_shader_source), name(name)
+	: name(name), m_vertex_source(vertex_shader_source), m_fragment_source(fragment_shader_source)
 {}
 
 const std::string ShaderProgram::get_vertex_shader_source() const { return m_vertex_source; }

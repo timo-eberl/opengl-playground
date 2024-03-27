@@ -14,10 +14,11 @@ OpenGLAxesRenderer::OpenGLAxesRenderer() {
 	glBindVertexArray(m_vertex_array);
 
 	// positions
+	const auto dist = static_cast<GLfloat>(m_distance);
 	const GLfloat positions_buffer [] = {
-		-m_distance, 0.0f, 0.0f,    m_distance, 0.0f, 0.0f, // x
-		0.0f, -m_distance, 0.0f,    0.0f, m_distance, 0.0f, // y
-		0.0f, 0.0f, -m_distance,    0.0f, 0.0f, m_distance, // z
+		-dist, 0.0f, 0.0f,    dist, 0.0f, 0.0f, // x
+		0.0f, -dist, 0.0f,    0.0f, dist, 0.0f, // y
+		0.0f, 0.0f, -dist,    0.0f, 0.0f, dist, // z
 	};
 	glGenBuffers(1, &m_positions_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, m_positions_buffer);

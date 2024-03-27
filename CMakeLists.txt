@@ -73,6 +73,9 @@ endif()
 	target_link_libraries(${PROJECT_NAME} PUBLIC glm)
 	target_link_libraries(${PROJECT_NAME} PUBLIC cgltf)
 	target_link_libraries(${PROJECT_NAME} PUBLIC mikktspace)
+	# enable various warnings for ron, but not for other libraries
+	# the compiler flags work on GCC and clang, but not MSVC
+	target_compile_options(${PROJECT_NAME} PRIVATE -Wpedantic -Wall -Wextra)
 
 # example application
 	if (RON_BUILD_EXAMPLES)
