@@ -6,6 +6,9 @@ std::shared_ptr<IUniform> ron::make_uniform(const std::shared_ptr<Texture> &valu
 	return std::make_shared<TextureUniform>(value);
 }
 
+std::shared_ptr<IUniform> ron::make_uniform(const float &value) {
+	return std::make_shared<Float1Uniform>(glm::vec1(value));
+}
 std::shared_ptr<IUniform> ron::make_uniform(const glm::vec1 &value) {
 	return std::make_shared<Float1Uniform>(value);
 }
@@ -19,6 +22,9 @@ std::shared_ptr<IUniform> ron::make_uniform(const glm::vec4 &value) {
 	return std::make_shared<Float4Uniform>(value);
 }
 
+std::shared_ptr<IUniform> ron::make_uniform(const int &value) {
+	return std::make_shared<Int1Uniform>(glm::ivec1(value));
+}
 std::shared_ptr<IUniform> ron::make_uniform(const glm::ivec1 &value) {
 	return std::make_shared<Int1Uniform>(value);
 }
@@ -32,6 +38,9 @@ std::shared_ptr<IUniform> ron::make_uniform(const glm::ivec4 &value) {
 	return std::make_shared<Int4Uniform>(value);
 }
 
+std::shared_ptr<IUniform> ron::make_uniform(const unsigned int &value) {
+	return std::make_shared<UInt1Uniform>(glm::uvec1(value));
+}
 std::shared_ptr<IUniform> ron::make_uniform(const glm::uvec1 &value) {
 	return std::make_shared<UInt1Uniform>(value);
 }

@@ -11,11 +11,13 @@
 
 using namespace ron;
 
+static const auto initial_resolution = glm::uvec2(1300, 900);
+
 struct State {
 	std::shared_ptr<PerspectiveCamera> camera;
 	std::unique_ptr<CameraViewportControls> camera_controls;
 	Scene scene;
-	OpenGLRenderer renderer;
+	std::unique_ptr<OpenGLRenderer> renderer;
 };
 
 static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -34,7 +36,9 @@ int main() {
 	// tell GLFW we want to use the core-profile -> no backwards-compatible features
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow* window = glfwCreateWindow(1300, 900, "Ron", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(
+		initial_resolution.x, initial_resolution.y, "Ron", NULL, NULL
+	);
 	if (window == NULL) {
 		log::error("Failed to create GLFW window");
 		glfwTerminate();
@@ -102,26 +106,37 @@ void create_scene(State& state) {
 	);
 
 	state.scene.add(ron::gltf::import("models/antique_camera/antique_camera.glb"));
+	state.scene.add(ron::gltf::import("models/shadow_test_scene/shadow_test_scene.glb"));
 	// state.scene.add(ron::gltf::import("models/gravel_torus/gravel_torus.glb"));
 	// state.scene.add(ron::gltf::import("models/gravel_torus/gravel_torus_without_tangents.glb"));
 	// state.scene.add(ron::gltf::import("default/models/cube/cube.gltf"));
 
-	const auto cube = ron::gltf::import("default/models/cube/cube.gltf").get_mesh_nodes()[0];
-	cube->get_mesh()->sections[0].material = tex_mat;
-	state.scene.add(cube);
+	// const auto cube = ron::gltf::import("default/models/cube/cube.gltf").get_mesh_nodes()[0];
+	// cube->get_mesh()->sections[0].material = tex_mat;
+	// state.scene.add(cube);
 
-	state.renderer.render_axes = true;
-	state.renderer.render_grid = true;
+	DirectionalLight directional_light = {};
+	// directional_light.world_direction = glm::normalize(glm::vec3(4.1f, 5.9f, -1.0f));
+	directional_light.world_position = glm::vec3(0.0f, 10.0f, 0.0f);
+	directional_light.shadow.enabled = true;
+	directional_light.shadow.bias = 0.02f;
+	directional_light.shadow.far = 50.0f;
+	directional_light.shadow.frustum_size = 15.0f;
+	state.scene.set_directional_light(directional_light);
 
-	state.renderer.preload(state.scene);
+	state.renderer->preload(state.scene);
 }
 
 void initialize(GLFWwindow* window, State& state) {
-	state.renderer.set_clear_color(glm::vec4(0.231f, 0.231f, 0.231f, 1.0f));
+	state.renderer = std::make_unique<ron::OpenGLRenderer>(initial_resolution);
+
+	state.renderer->set_clear_color(glm::vec4(0.231f, 0.231f, 0.231f, 1.0f));
 
 	create_scene(state);
 
-	state.camera = std::make_shared<ron::PerspectiveCamera>(40.0f, 1300.0f/900.0f, 0.1f, 1000.0f);
+	const auto aspect_ratio
+		= static_cast<float>(initial_resolution.x) / static_cast<float>(initial_resolution.y);
+	state.camera = std::make_shared<ron::PerspectiveCamera>(40.0f, aspect_ratio, 0.1f, 1000.0f);
 
 	const auto initial_camera_rotation = glm::vec2(glm::radians(-24.2f), glm::radians(63.6f));
 	state.camera_controls = std::make_unique<ron::CameraViewportControls>(initial_camera_rotation);
@@ -144,14 +159,14 @@ void process(GLFWwindow* window, State& state) {
 }
 
 void render(GLFWwindow* window, State& state) {
-	state.renderer.render(state.scene, *state.camera);
+	state.renderer->render(state.scene, *state.camera);
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 	auto state = static_cast<State *>(glfwGetWindowUserPointer(window));
 	assert(state);
 
-	glViewport(0, 0, width, height);
+	state->renderer->resolution = glm::uvec2(width, height);
 
 	state->camera->set_aspect_ratio(static_cast<float>(width) / static_cast<float>(height));
 }

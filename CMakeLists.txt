@@ -60,6 +60,7 @@ endif()
 		src/opengl_texture.cpp
 		src/opengl_axes_renderer.cpp
 		src/opengl_grid_renderer.cpp
+		src/opengl_directional_light.cpp
 		src/assets.cpp
 		src/tangent_generation.cpp
 	)

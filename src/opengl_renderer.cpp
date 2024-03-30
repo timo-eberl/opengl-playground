@@ -7,36 +7,165 @@
 
 using namespace ron;
 
-OpenGLRenderer::OpenGLRenderer() {
+OpenGLRenderer::OpenGLRenderer(const glm::uvec2 &resolution) : resolution(resolution) {
 	m_error_shader_program = assets::load_shader_program(
 		"default/shaders/error.vert", "default/shaders/error.frag"
 	);
 	if (!m_shader_programs.contains(m_error_shader_program)) {
-		auto error_shader_program_gpu_data = opengl_setup_shader_program(*m_error_shader_program);
-		assert(error_shader_program_gpu_data.id != 0);
-		m_shader_programs.emplace(m_error_shader_program, error_shader_program_gpu_data);
+		auto gpu_data = opengl_setup_shader_program(*m_error_shader_program);
+		assert(gpu_data.id != 0);
+		m_shader_programs.emplace(m_error_shader_program, gpu_data);
 	}
 
 	m_axes_shader_program = assets::load_shader_program(
 		"default/shaders/axes.vert", "default/shaders/axes.frag"
 	);
 	if (!m_shader_programs.contains(m_axes_shader_program)) {
-		auto axes_shader_program_gpu_data = opengl_setup_shader_program(*m_axes_shader_program);
-		assert(axes_shader_program_gpu_data.id != 0);
-		m_shader_programs.emplace(m_axes_shader_program, axes_shader_program_gpu_data);
+		auto gpu_data = opengl_setup_shader_program(*m_axes_shader_program);
+		assert(gpu_data.id != 0);
+		m_shader_programs.emplace(m_axes_shader_program, gpu_data);
 	}
 
 	m_grid_shader_program = assets::load_shader_program(
 		"default/shaders/grid.vert", "default/shaders/grid.frag"
 	);
 	if (!m_shader_programs.contains(m_grid_shader_program)) {
-		auto grid_shader_program_gpu_data = opengl_setup_shader_program(*m_grid_shader_program);
-		assert(grid_shader_program_gpu_data.id != 0);
-		m_shader_programs.emplace(m_grid_shader_program, grid_shader_program_gpu_data);
+		auto gpu_data = opengl_setup_shader_program(*m_grid_shader_program);
+		assert(gpu_data.id != 0);
+		m_shader_programs.emplace(m_grid_shader_program, gpu_data);
 	}
+
+	m_depth_shader_program = assets::load_shader_program(
+		"default/shaders/depth.vert", "default/shaders/depth.frag"
+	);
+	if (!m_shader_programs.contains(m_depth_shader_program)) {
+		auto gpu_data = opengl_setup_shader_program(*m_depth_shader_program);
+		assert(gpu_data.id != 0);
+		m_shader_programs.emplace(m_depth_shader_program, gpu_data);
+	}
+
+	// all writes to an srgb image will assume the input is in linear space and will convert to srgb
+	// -> always have this enabled
+	glEnable(GL_FRAMEBUFFER_SRGB);
 }
 
-void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
+void OpenGLRenderer::render(const Scene &scene, const ICamera &camera) {
+	Uniforms render_cycle_uniforms = {};
+
+	// render shadow map
+	const auto light = scene.get_directional_light();
+	const auto &light_gpu_data = get_dir_light_gpu_data(
+		scene.get_directional_light(), scene.get_directional_light_update_count()
+	);
+	auto light_space_matrix = glm::identity<glm::mat4>();
+	if (light->shadow.enabled) {
+		glViewport(0, 0, light->shadow.map_size.x, light->shadow.map_size.y);
+		glBindFramebuffer(GL_FRAMEBUFFER, light_gpu_data.shadow_map_framebuffer);
+			glClear(GL_DEPTH_BUFFER_BIT);
+			glEnable(GL_DEPTH_TEST);
+
+			const auto light_projection_matrix = glm::ortho(
+				-light->shadow.frustum_size, light->shadow.frustum_size,
+				-light->shadow.frustum_size, light->shadow.frustum_size,
+				light->shadow.near, light->shadow.far
+			);
+			const auto light_view_matrix = glm::lookAt(
+				light->world_position,
+				light->world_position - light->world_direction,
+				glm::vec3(0.0f, 1.0f, 0.0f)
+			);
+			light_space_matrix = light_projection_matrix * light_view_matrix;
+
+			render_cycle_uniforms["view_projection_matrix"] = make_uniform(light_space_matrix);
+
+			const auto &program_gpu_data = get_shader_program_gpu_data(m_depth_shader_program);
+			glUseProgram(program_gpu_data.id);
+			opengl_set_shader_program_uniforms(program_gpu_data, render_cycle_uniforms);
+
+			for (const auto & mesh_node : scene.get_mesh_nodes()) {
+				const auto model_matrix = mesh_node->get_model_matrix();
+
+				for (const auto & mesh_section : mesh_node->get_mesh()->sections) {
+					const auto &material = mesh_section.material ?
+						mesh_section.material : scene.default_material;
+
+					switch (material->culling_mode) {
+						case Material::CullingMode::NONE:
+							glDisable(GL_CULL_FACE); break;
+						case Material::CullingMode::FRONT:
+							glEnable(GL_CULL_FACE); glCullFace(GL_FRONT); break;
+						case Material::CullingMode::BACK:
+							glEnable(GL_CULL_FACE); glCullFace(GL_BACK); break;
+						default: assert(false); break;
+					}
+
+					Uniforms node_uniforms = {};
+					node_uniforms["model_matrix"] = make_uniform(model_matrix);
+					opengl_set_shader_program_uniforms(program_gpu_data, node_uniforms);
+
+					const auto &geometry_gpu_data = get_geometry_gpu_data(mesh_section.geometry);
+					assert(geometry_gpu_data.vertex_array != 0);
+
+					glDisable(GL_BLEND);
+					glBindVertexArray(geometry_gpu_data.vertex_array);
+					glDrawElements(
+						GL_TRIANGLES, mesh_section.geometry->indices.size(), GL_UNSIGNED_INT, NULL
+					);
+
+					// unbind to avoid accidental modification
+					glBindVertexArray(0);
+				}
+			}
+			glUseProgram(0);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
+	// debug shadow map
+	if (false) {
+		clear();
+		glViewport(0, 0, resolution.x, resolution.y);
+		static bool setup_done = false;
+		static GLuint vao;
+		if (!setup_done) {
+			static const GLfloat positions[] = {
+				-3.0f, -1.0f,
+				 1.0f, -1.0f,
+				 1.0f,  3.0f,
+			};
+			glGenVertexArrays(1, &vao);
+			glBindVertexArray(vao);
+			GLuint pos_buffer = 0;
+			glGenBuffers(1, &pos_buffer);
+			glBindBuffer(GL_ARRAY_BUFFER, pos_buffer);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
+			glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, (GLvoid*)0);
+			glEnableVertexAttribArray(0);
+
+			glBindVertexArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+			setup_done = true;
+		}
+		const auto shader_program = assets::load_shader_program(
+			"default/shaders/debug.vert", "default/shaders/debug.frag"
+		);
+		const auto &shader_program_gpu_data = get_shader_program_gpu_data(shader_program);
+		glUseProgram(shader_program_gpu_data.id);
+		auto location = glGetUniformLocation(shader_program_gpu_data.id, "tex");
+		glUniform1i(location, 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, light_gpu_data.shadow_map);
+		glBindVertexArray(vao);
+
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+
+		glBindVertexArray(0);
+		glUseProgram(0);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		return;
+	}
+
+	glViewport(0, 0, resolution.x, resolution.y);
 	if (scene.depth_test) glEnable(GL_DEPTH_TEST);
 	if (auto_clear) clear();
 
@@ -44,14 +173,17 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
 	const auto view_matrix = glm::inverse(camera.get_model_matrix());
 	const auto projection_matrix = camera.get_projection_matrix();
 	const auto view_projection_matrix = projection_matrix * view_matrix;
-	const auto directional_light_world_direction = glm::normalize(glm::vec3(4.1f, 5.9f, -1.0f));
 
-	scene.global_uniforms["view_matrix"] = make_uniform(view_matrix);
-	scene.global_uniforms["projection_matrix"] = make_uniform(projection_matrix);
-	scene.global_uniforms["view_projection_matrix"] = make_uniform(view_projection_matrix);
-	scene.global_uniforms["camera_world_position"] = make_uniform(camera_world_position);
-	scene.global_uniforms["directional_light_world_direction"]
-		= make_uniform(directional_light_world_direction);
+	render_cycle_uniforms["view_matrix"] = make_uniform(view_matrix);
+	render_cycle_uniforms["projection_matrix"] = make_uniform(projection_matrix);
+	render_cycle_uniforms["view_projection_matrix"] = make_uniform(view_projection_matrix);
+	render_cycle_uniforms["camera_world_position"] = make_uniform(camera_world_position);
+	if (light->shadow.enabled) {
+		render_cycle_uniforms["light_space_matrix"] = make_uniform(light_space_matrix);
+		render_cycle_uniforms["shadow_map"] = std::make_shared<GPUTextureUniform>(
+			reinterpret_cast<const void *>(&light_gpu_data.shadow_map)
+		);
+	}
 
 	for (const auto & mesh_node : scene.get_mesh_nodes()) {
 		const auto model_matrix = mesh_node->get_model_matrix();
@@ -86,17 +218,20 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
 			node_uniforms["normal_local_to_world_matrix"]
 				= make_uniform(normal_local_to_world_matrix);
 
-			opengl_set_shader_program_uniforms(shader_program_gpu_data, scene.global_uniforms);
+			Uniforms all_uniforms = {};
+			all_uniforms.insert(render_cycle_uniforms.begin(), render_cycle_uniforms.end());
+			all_uniforms.insert(scene.global_uniforms.begin(), scene.global_uniforms.end());
 			if (material) {
-				opengl_set_shader_program_uniforms(shader_program_gpu_data, material->uniforms);
+				all_uniforms.insert(material->uniforms.begin(), material->uniforms.end());
 			}
-			opengl_set_shader_program_uniforms(shader_program_gpu_data, node_uniforms);
+			all_uniforms.insert(node_uniforms.begin(), node_uniforms.end());
+
+			opengl_set_shader_program_uniforms(shader_program_gpu_data, all_uniforms);
 
 			const auto &geometry_gpu_data = get_geometry_gpu_data(mesh_section.geometry);
 			assert(geometry_gpu_data.vertex_array != 0);
 
 			glDisable(GL_BLEND);
-			glEnable(GL_FRAMEBUFFER_SRGB);
 			glBindVertexArray(geometry_gpu_data.vertex_array);
 			glDrawElements(GL_TRIANGLES, mesh_section.geometry->indices.size(), GL_UNSIGNED_INT, NULL);
 
@@ -115,7 +250,7 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		glUseProgram(shader_program_gpu_data.id);
-		opengl_set_shader_program_uniforms(shader_program_gpu_data, scene.global_uniforms);
+		opengl_set_shader_program_uniforms(shader_program_gpu_data, render_cycle_uniforms);
 
 		m_axes_renderer.render();
 
@@ -130,7 +265,7 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		glUseProgram(shader_program_gpu_data.id);
-		opengl_set_shader_program_uniforms(shader_program_gpu_data, scene.global_uniforms);
+		opengl_set_shader_program_uniforms(shader_program_gpu_data, render_cycle_uniforms);
 
 		m_grid_renderer.render();
 
@@ -141,23 +276,28 @@ void OpenGLRenderer::render(Scene &scene, const ICamera &camera) {
 void OpenGLRenderer::set_clear_color(glm::vec4 clear_color) { m_clear_color = clear_color; }
 
 void OpenGLRenderer::clear() {
+	// disable srgb conversion, because clear_color is expected to already be in srgb space
 	glDisable(GL_FRAMEBUFFER_SRGB);
 	glClearColor(m_clear_color.r, m_clear_color.g, m_clear_color.b, m_clear_color.a);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_FRAMEBUFFER_SRGB);
 }
 
 void OpenGLRenderer::clear_color() { clear_color(m_clear_color); }
 
 void OpenGLRenderer::clear_color(glm::vec4 clear_color) {
-	glDisable(GL_FRAMEBUFFER_SRGB); 
+	// disable srgb conversion, because clear_color is expected to already be in srgb space
+	glDisable(GL_FRAMEBUFFER_SRGB);
 	glClearColor(clear_color.r, clear_color.g, clear_color.b, clear_color.a);
 	glClear(GL_COLOR_BUFFER_BIT);
+	glEnable(GL_FRAMEBUFFER_SRGB);
 }
 
 void OpenGLRenderer::clear_depth() { glClear(GL_DEPTH_BUFFER_BIT); }
 
 void OpenGLRenderer::preload(const Scene &scene) {
 	preload(scene.default_material);
+	preload(scene.get_directional_light(), scene.get_directional_light_update_count());
 
 	for (const auto &mesh_node : scene.get_mesh_nodes()) {
 		preload(*mesh_node);
@@ -205,6 +345,16 @@ void OpenGLRenderer::preload(const std::shared_ptr<Texture> texture) {
 	}
 }
 
+void OpenGLRenderer::preload(
+	const std::shared_ptr<const DirectionalLight> dir_light, const unsigned int update_count
+) {
+	if (!m_directional_lights.contains(dir_light)) {
+		auto gpu_data = opengl_setup_dir_light(*dir_light);
+		gpu_data.last_update_count = update_count;
+		m_directional_lights.emplace(dir_light, gpu_data);
+	}
+}
+
 void OpenGLRenderer::preload(const std::shared_ptr<Geometry> geometry) {
 	// create gpu data if it does not exist yet
 	if (!m_geometries.contains(geometry)) {
@@ -219,7 +369,7 @@ const OpenGLShaderProgramGPUData & OpenGLRenderer::get_shader_program_gpu_data(
 	if (!m_shader_programs.contains(shader_program)) {
 		log::warn(
 			std::string("GPU Data of ShaderProgram ")
-			+ shader_program->name + "not found."
+			+ shader_program->name + " not found."
 			+ " Consider preloading before rendering."
 		);
 		preload(shader_program);
@@ -271,6 +421,27 @@ const OpenGLTextureGPUData & OpenGLRenderer::get_texture_gpu_data(
 	return m_textures[texture];
 }
 
+const OpenGLDirectionalLightGPUData & OpenGLRenderer::get_dir_light_gpu_data(
+	const std::shared_ptr<const DirectionalLight> dir_light, const unsigned int update_count
+) {
+	if (!m_directional_lights.contains(dir_light)) {
+		log::warn(
+			"GPU Data of Directional Light not found. Consider preloading before rendering."
+		);
+		preload(dir_light, update_count);
+	}
+	else {
+		// check if the light was updated, if so, update gpu data
+		auto &gpu_data = m_directional_lights[dir_light];
+		if (update_count > gpu_data.last_update_count) {
+			opengl_release_dir_light(gpu_data);
+			m_directional_lights.erase(dir_light);
+			preload(dir_light, update_count);
+		}
+	}
+	return m_directional_lights[dir_light];
+}
+
 void OpenGLRenderer::opengl_set_shader_program_uniforms(
 	const OpenGLShaderProgramGPUData &program_gpu_data, const Uniforms &uniforms
 ) {
@@ -284,6 +455,18 @@ void OpenGLRenderer::opengl_set_shader_program_uniforms(
 					uniform->value_ptr()
 				);
 				auto &texture_gpu_data = get_texture_gpu_data(texture);
+				if (texture_gpu_data.id == 0) {
+					continue; // don't bind if the texture is invalid
+				}
+				glUniform1i(location, texture_unit_offset);
+				glActiveTexture(GL_TEXTURE0 + texture_unit_offset);
+				glBindTexture(GL_TEXTURE_2D, texture_gpu_data.id);
+				texture_unit_offset++;
+			} break;
+			case GPU_TEXTURE: {
+				const auto &texture_gpu_data = *reinterpret_cast<const OpenGLTextureGPUData *>(
+					uniform->value_ptr()
+				);
 				if (texture_gpu_data.id == 0) {
 					continue; // don't bind if the texture is invalid
 				}

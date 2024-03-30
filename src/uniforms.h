@@ -13,7 +13,7 @@
 namespace ron {
 
 enum UniformType {
-	TEXTURE,
+	TEXTURE, GPU_TEXTURE,
 	FLOAT1, FLOAT2, FLOAT3, FLOAT4,
 	INT1, INT2, INT3, INT4,
 	UINT1, UINT2, UINT3, UINT4,
@@ -39,6 +39,16 @@ public:
 	virtual UniformType get_type() const { return TEXTURE; }
 	std::shared_ptr<Texture> texture;
 };
+
+class GPUTextureUniform : public IUniform {
+public:
+	GPUTextureUniform(const void * v) : value(v) {}
+	virtual ~GPUTextureUniform() {}
+	virtual const void *value_ptr() const override { return value; }
+	virtual UniformType get_type() const { return GPU_TEXTURE; }
+	const void * value;
+};
+
 
 class Float1Uniform : public IUniform {
 public:
@@ -231,16 +241,19 @@ public:
 
 std::shared_ptr<IUniform> make_uniform(const std::shared_ptr<Texture> &value);
 
+std::shared_ptr<IUniform> make_uniform(const float &value);
 std::shared_ptr<IUniform> make_uniform(const glm::vec1 &value);
 std::shared_ptr<IUniform> make_uniform(const glm::vec2 &value);
 std::shared_ptr<IUniform> make_uniform(const glm::vec3 &value);
 std::shared_ptr<IUniform> make_uniform(const glm::vec4 &value);
 
+std::shared_ptr<IUniform> make_uniform(const int &value);
 std::shared_ptr<IUniform> make_uniform(const glm::ivec1 &value);
 std::shared_ptr<IUniform> make_uniform(const glm::ivec2 &value);
 std::shared_ptr<IUniform> make_uniform(const glm::ivec3 &value);
 std::shared_ptr<IUniform> make_uniform(const glm::ivec4 &value);
 
+std::shared_ptr<IUniform> make_uniform(const unsigned int &value);
 std::shared_ptr<IUniform> make_uniform(const glm::uvec1 &value);
 std::shared_ptr<IUniform> make_uniform(const glm::uvec2 &value);
 std::shared_ptr<IUniform> make_uniform(const glm::uvec3 &value);

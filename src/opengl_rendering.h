@@ -31,6 +31,12 @@ struct OpenGLTextureGPUData {
 	unsigned int last_update_count = 0;
 };
 
+struct OpenGLDirectionalLightGPUData {
+	GLuint shadow_map_framebuffer;
+	GLuint shadow_map;
+	unsigned int last_update_count = 0;
+};
+
 class OpenGLAxesRenderer {
 public:
 	OpenGLAxesRenderer();
@@ -68,7 +74,9 @@ private:
 
 class OpenGLRenderer {
 public:
-	OpenGLRenderer();
+	OpenGLRenderer(const glm::uvec2 &resolution);
+
+	glm::uvec2 resolution;
 
 	bool auto_clear = true;
 	bool render_axes = false;
@@ -81,8 +89,9 @@ public:
 	void preload(const std::shared_ptr<ShaderProgram> shader_program);
 	void preload(const std::shared_ptr<Geometry> geometry);
 	void preload(const std::shared_ptr<Texture> texture);
+	void preload(const std::shared_ptr<const DirectionalLight> dir_light, const unsigned int update_count);
 
-	void render(Scene &scene, const ICamera &camera);
+	void render(const Scene &scene, const ICamera &camera);
 
 	void clear();
 	void clear_color();
@@ -90,22 +99,28 @@ public:
 	void clear_depth();
 private:
 	glm::vec4 m_clear_color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
 	ron::OpenGLAxesRenderer m_axes_renderer = {};
 	ron::OpenGLGridRenderer m_grid_renderer = {};
 	// shader programs that will always be preloaded
 	std::shared_ptr<ShaderProgram> m_error_shader_program = {};
 	std::shared_ptr<ShaderProgram> m_axes_shader_program = {};
 	std::shared_ptr<ShaderProgram> m_grid_shader_program = {};
+	std::shared_ptr<ShaderProgram> m_depth_shader_program = {};
 	// OpenGL specific data
 	std::unordered_map<std::shared_ptr<ShaderProgram>, OpenGLShaderProgramGPUData> m_shader_programs = {};
 	std::unordered_map<std::shared_ptr<Geometry>, OpenGLGeometryGPUData> m_geometries = {};
 	std::unordered_map<std::shared_ptr<Texture>, OpenGLTextureGPUData> m_textures = {};
+	std::unordered_map<std::shared_ptr<const DirectionalLight>, OpenGLDirectionalLightGPUData> m_directional_lights = {};
 
 	const OpenGLShaderProgramGPUData & get_shader_program_gpu_data(
 		const std::shared_ptr<ShaderProgram> shader_program
 	);
 	const OpenGLGeometryGPUData & get_geometry_gpu_data(const std::shared_ptr<Geometry> geometry);
 	const OpenGLTextureGPUData & get_texture_gpu_data(const std::shared_ptr<Texture> texture);
+	const OpenGLDirectionalLightGPUData & get_dir_light_gpu_data(
+		const std::shared_ptr<const DirectionalLight> dir_light, const unsigned int update_count
+	);
 
 	void opengl_set_shader_program_uniforms(
 		const OpenGLShaderProgramGPUData &program_gpu_data, const Uniforms &uniforms
@@ -120,5 +135,8 @@ void opengl_release_shader_program(OpenGLShaderProgramGPUData &gpu_data);
 
 OpenGLTextureGPUData opengl_setup_texture(const Texture &texture);
 void opengl_release_texture(OpenGLTextureGPUData &gpu_data);
+
+OpenGLDirectionalLightGPUData opengl_setup_dir_light(const DirectionalLight &dir_light);
+void opengl_release_dir_light(OpenGLDirectionalLightGPUData &gpu_data);
 
 } // ron
