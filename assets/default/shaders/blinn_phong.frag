@@ -60,7 +60,7 @@ vec3 initialize_normal(vec4 t_normal_tex) {
 
 void prepare_shadow_map_samples(
 	out bool exit_early, out float exit_early_one_minus_shadow,
-	out vec2[poisson_num_samples] poisson_uvs, out float biased_depth
+	out vec2[poisson_num_samples] poisson_uvs, out float depth_minus_bias
 ) {
 	// transform from light_space (clip space) to normalized device coordinates
 	// the GPU automatically does this for gl_Position and we have to accomodate for that
@@ -79,8 +79,10 @@ void prepare_shadow_map_samples(
 		directional_light_shadow_bias * (1.0 - dot(world_normal,directional_light_world_direction)),
 		directional_light_shadow_bias * 0.01
 	);
-	biased_depth = current_depth - bias;
+	depth_minus_bias = current_depth - bias;
 
+	// make the offset dependent on the texture size, because
+	// if the resolution is too low we get aliasing, if it is too high we get banding
 	vec2 uv_offset_multiplier = poisson_disk_spread * (1024.0 / textureSize(shadow_map, 0));
 
 	// instead of taking a lot of samples whenpoisson sampling, we may be able to exit early,
@@ -94,11 +96,11 @@ void prepare_shadow_map_samples(
 	exit_early_uvs[3] = uv + vec2( 1.0,  1.0) * uv_offset_multiplier;
 
 	float[5] early_samples = {
-		texture(shadow_map, vec3(uv, biased_depth)),
-		texture(shadow_map, vec3(exit_early_uvs[0], biased_depth)),
-		texture(shadow_map, vec3(exit_early_uvs[1], biased_depth)),
-		texture(shadow_map, vec3(exit_early_uvs[2], biased_depth)),
-		texture(shadow_map, vec3(exit_early_uvs[3], biased_depth))
+		texture(shadow_map, vec3(uv, depth_minus_bias)),
+		texture(shadow_map, vec3(exit_early_uvs[0], depth_minus_bias)),
+		texture(shadow_map, vec3(exit_early_uvs[1], depth_minus_bias)),
+		texture(shadow_map, vec3(exit_early_uvs[2], depth_minus_bias)),
+		texture(shadow_map, vec3(exit_early_uvs[3], depth_minus_bias))
 	};
 	if (
 		(early_samples[0] == 0.0 || early_samples[0] == 1.0)
@@ -118,51 +120,31 @@ void prepare_shadow_map_samples(
 }
 
 float poisson_sample_shadow_map(
-	vec2[poisson_num_samples] poisson_uvs, float biased_depth
+	vec2[poisson_num_samples] poisson_uvs, float depth_minus_bias
 ) {
-	// poisson sampling
 	float one_minus_shadow = 0.0;
 	for (int i = 0; i < poisson_num_samples; ++i) {
 		// shadow_map is a depth texture, therefore we sample it with a shadow sampler
 		// the result is a single float value in the range [0,1]
 		one_minus_shadow += texture(
-			shadow_map, vec3(poisson_uvs[i], biased_depth)
+			shadow_map, vec3(poisson_uvs[i], depth_minus_bias)
 		);
 	}
 	return one_minus_shadow / float(poisson_num_samples);
 }
 
-void main() {
-	// out bool exit_early, out float exit_early_one_minus_shadow,
-	// out vec2[poisson_num_samples] poisson_uvs, out float biased_depth
-	bool shadow_exit_early;
-	float one_minus_shadow = 0.0;
-	vec2[poisson_num_samples] poissoned_shadow_map_uvs;
-	float biased_depth;
-	if (directional_light_shadow_enabled) {
-		prepare_shadow_map_samples(
-			shadow_exit_early, one_minus_shadow, poissoned_shadow_map_uvs, biased_depth
-		);
-	}
+struct Surface {
+	vec3 albedo;
+	vec3 normal;
+	float metallic;
+	float roughness;
+};
 
-	// sample all textures at the same time
-	vec4 t_albedo_tex = texture(albedo_tex, uv);
-	vec4 t_metallic_roughness_tex = texture(metallic_roughness_tex, uv);
-	vec4 t_normal_tex = texture(normal_tex, uv);
-	if (directional_light_shadow_enabled && !shadow_exit_early) {
-		one_minus_shadow = poisson_sample_shadow_map(
-			poissoned_shadow_map_uvs, biased_depth
-		);
-	}
-
-	// surface properties
-	vec3 albedo = t_albedo_tex.rgb * albedo_color.rgb;
-	vec3 normal = initialize_normal(t_normal_tex);
-	float metallic = t_metallic_roughness_tex.b * metallic_factor;
-	float roughness = t_metallic_roughness_tex.g * roughness_factor;
-
+vec3 blinn_phong_lighting(
+	Surface surface, float one_minus_shadow
+) {
 	// lambertian diffuse
-	float diffuse_lighting = clamp( dot(directional_light_world_direction, normal), 0,1 );
+	float diffuse_lighting = clamp( dot(directional_light_world_direction, surface.normal), 0,1 );
 	if (directional_light_shadow_enabled) {
 		diffuse_lighting *= one_minus_shadow;
 	}
@@ -173,17 +155,49 @@ void main() {
 	// blinn-phong specular lighting
 	vec3 view_direction = normalize(camera_world_position - world_position);
 	vec3 half_vector = normalize(directional_light_world_direction + view_direction);
-	float specular_lighting = clamp( dot(half_vector, normal), 0,1 );
-	specular_lighting = pow(specular_lighting, (1.0 - roughness) * 100.0);
+	float specular_lighting = clamp( dot(half_vector, surface.normal), 0,1 );
+	specular_lighting = pow(specular_lighting, (1.0 - surface.roughness) * 100.0);
 	if (directional_light_shadow_enabled) {
 		specular_lighting *= one_minus_shadow;
 	}
 
 	const float specular_strength = 0.1;
 
-	frag_color = vec4(vec3(
-		mix(diffuse_lighting * albedo, vec3(specular_lighting), specular_strength)
+	return vec3(
+		mix(diffuse_lighting * surface.albedo, vec3(specular_lighting), specular_strength)
 		* directional_light_intensity
-		+ vec3(ambient_lighting * albedo)
-	), 1.0);
+		+ vec3(ambient_lighting * surface.albedo)
+	);
+}
+
+void main() {
+	bool shadow_exit_early;
+	float one_minus_shadow = 0.0;
+	vec2[poisson_num_samples] poissoned_shadow_map_uvs;
+	float depth_minus_bias;
+	if (directional_light_shadow_enabled) {
+		prepare_shadow_map_samples(
+			shadow_exit_early, one_minus_shadow, poissoned_shadow_map_uvs, depth_minus_bias
+		);
+	}
+
+	// sample all textures at the same time
+	vec4 t_albedo_tex = texture(albedo_tex, uv);
+	vec4 t_metallic_roughness_tex = texture(metallic_roughness_tex, uv);
+	vec4 t_normal_tex = texture(normal_tex, uv);
+	if (directional_light_shadow_enabled && !shadow_exit_early) {
+		one_minus_shadow = poisson_sample_shadow_map(
+			poissoned_shadow_map_uvs, depth_minus_bias
+		);
+	}
+
+	Surface surface;
+	surface.albedo = t_albedo_tex.rgb * albedo_color.rgb;
+	surface.normal = initialize_normal(t_normal_tex);
+	surface.metallic = t_metallic_roughness_tex.b * metallic_factor;
+	surface.roughness = t_metallic_roughness_tex.g * roughness_factor;
+
+	frag_color = vec4(
+		blinn_phong_lighting(surface, one_minus_shadow),
+	1.0);
 }
