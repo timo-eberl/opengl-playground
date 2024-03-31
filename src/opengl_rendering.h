@@ -75,6 +75,7 @@ private:
 class OpenGLRenderer {
 public:
 	OpenGLRenderer(const glm::uvec2 &resolution);
+	OpenGLRenderer(const unsigned int resolution_x, const unsigned int resolution_y);
 
 	glm::uvec2 resolution;
 
@@ -125,6 +126,8 @@ private:
 	void opengl_set_shader_program_uniforms(
 		const OpenGLShaderProgramGPUData &program_gpu_data, const Uniforms &uniforms
 	);
+
+	void init();
 };
 
 OpenGLGeometryGPUData opengl_setup_geometry(const Geometry &geometry);

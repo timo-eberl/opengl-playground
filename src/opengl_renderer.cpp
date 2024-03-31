@@ -7,7 +7,13 @@
 
 using namespace ron;
 
-OpenGLRenderer::OpenGLRenderer(const glm::uvec2 &resolution) : resolution(resolution) {
+OpenGLRenderer::OpenGLRenderer(const unsigned int resolution_x, const unsigned int resolution_y)
+	: resolution(resolution_x, resolution_y)
+{ init(); }
+
+OpenGLRenderer::OpenGLRenderer(const glm::uvec2 &resolution) : resolution(resolution) { init(); }
+
+void OpenGLRenderer::init() {
 	m_error_shader_program = assets::load_shader_program(
 		"default/shaders/error.vert", "default/shaders/error.frag"
 	);
