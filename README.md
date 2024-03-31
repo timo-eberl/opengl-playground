@@ -4,16 +4,16 @@ OpenGL 3D Rendering library written in C++
 
 ## Roadmap
 
-- [x] Basic Blinn-Phong rendering of triangle meshes with albedo, normal, metallic and roughness textures
-- [x] glTF 2.0 Import
-- [x] Render multiple scenes
-- [x] Tangent Generation
-- [x] Shader and texture hot reload
-- [ ] Multiple, configurable Lights
-- [ ] PBR Lighting
-- [ ] Emissive materials
-- [ ] Transparent materials
+- [x] Rendering of triangle meshes with albedo, normal, metallic and roughness textures
+- [x] Blinn-Phong lighting
+- [x] glTF 2.0 import
+- [x] Tangent generation
+- [x] Shader and texture hot reloading
+- [x] Shadows (Shadow mapping, PCF poisson soft shadows)
 - [ ] Post-Processing
+- [ ] Tone Mapping
+- [ ] PBR Lighting
+- [ ] Spot lights & Point lights
 
 ## Cloning
 
@@ -46,7 +46,7 @@ Initialization:
 auto scene = ron::gltf::import("models/default/cube/cube.gltf");
 auto camera = ron::PerspectiveCamera(45.0f, 1920.0f/1080.0f, 0.1f, 1000.0f);
 
-OpenGLRenderer renderer = {};
+auto renderer = ron::OpenGLRenderer(1920, 1080);
 renderer.preload(scene);
 ```
 
