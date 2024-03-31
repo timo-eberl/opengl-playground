@@ -84,7 +84,7 @@ OpenGLShaderProgramGPUData ron::opengl_setup_shader_program(const ShaderProgram 
 		return {};
 	}
 
-	return { program_id, 0 };
+	return { program_id, shader_program.get_update_count() };
 }
 
 void ron::opengl_release_shader_program(OpenGLShaderProgramGPUData & gpu_data) {
