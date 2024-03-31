@@ -11,7 +11,7 @@ out vec4 frag_color;
 uniform vec3 camera_world_position;
 uniform vec3 directional_light_world_direction;
 uniform float directional_light_intensity;
-uniform int directional_light_shadow_enabled;
+uniform bool directional_light_shadow_enabled;
 uniform float directional_light_shadow_bias;
 uniform vec4 albedo_color;
 uniform float metallic_factor;
@@ -19,7 +19,28 @@ uniform float roughness_factor;
 uniform sampler2D albedo_tex;
 uniform sampler2D metallic_roughness_tex;
 uniform sampler2D normal_tex;
-uniform sampler2D shadow_map;
+uniform sampler2DShadow shadow_map;
+
+const float poisson_disk_spread = 0.002;
+const int poisson_num_samples = 16;
+vec2 poisson_disk[16] = vec2[](
+	vec2(-0.94201624,  -0.39906216),
+	vec2( 0.94558609,  -0.76890725),
+	vec2(-0.094184101, -0.92938870),
+	vec2( 0.34495938,   0.29387760),
+	vec2(-0.91588581,   0.45771432),
+	vec2(-0.81544232,  -0.87912464),
+	vec2(-0.38277543,   0.27676845),
+	vec2( 0.97484398,   0.75648379),
+	vec2( 0.44323325,  -0.97511554),
+	vec2( 0.53742981,  -0.47373420),
+	vec2(-0.26496911,  -0.41893023),
+	vec2( 0.79197514,   0.19090188),
+	vec2(-0.24188840,   0.99706507),
+	vec2(-0.81409955,   0.91437590),
+	vec2( 0.19984126,   0.78641367),
+	vec2( 0.14383161,  -0.14100790)
+);
 
 vec3 initialize_normal(vec4 t_normal_tex) {
 	// swap y and z, convert to [-1;1] range
@@ -37,62 +58,101 @@ vec3 initialize_normal(vec4 t_normal_tex) {
 	return normal;
 }
 
-void prepare_shadow_map_samples(out vec2[3][3] shadow_map_uv, out float current_depth) {
+void prepare_shadow_map_samples(
+	out bool exit_early, out float exit_early_one_minus_shadow,
+	out vec2[poisson_num_samples] poisson_uvs, out float biased_depth
+) {
 	// transform from light_space (clip space) to normalized device coordinates
 	// the GPU automatically does this for gl_Position and we have to accomodate for that
 	// meaningless for orthographic projection, but important for perspective projection
 	vec3 light_space_ndc_position = light_space_position.xyz / light_space_position.w;
-
 	// transform from [-1,1] to [0,1]
 	vec3 light_space_ndc_01_position = light_space_ndc_position * 0.5 + 0.5;
+	vec2 uv = light_space_ndc_01_position.xy;
 
-	vec2 texel_size = 1.0 / textureSize(shadow_map, 0);
-
-	for (int x = -1; x < 2; ++x)
-	for (int y = -1; y < 2; ++y) {
-		shadow_map_uv[x+1][y+1] = light_space_ndc_01_position.xy + vec2(x,y) * texel_size;
-	}
-
-	current_depth = light_space_ndc_01_position.z;
-}
-
-float calculate_shadow(float current_depth, vec4[3][3] shadow_map_samples) {
+	float current_depth = light_space_ndc_01_position.z;
 	// limit the depth to 1.0, otherwise areas that are behind the lights frustum are shadowed
 	current_depth = min(current_depth, 1.0);
+
 	// increase bias the steeper the angle of the light
 	float bias = max(
 		directional_light_shadow_bias * (1.0 - dot(world_normal,directional_light_world_direction)),
 		directional_light_shadow_bias * 0.01
 	);
+	biased_depth = current_depth - bias;
 
-	float shadow = 0.0;
+	vec2 uv_offset_multiplier = poisson_disk_spread * (1024.0 / textureSize(shadow_map, 0));
 
-	for (int x = 0; x < 3; ++x)
-	for (int y = 0; y < 3; ++y) {
-		float shadow_map_depth = shadow_map_samples[x][y].r;
-		shadow += float(current_depth - bias > shadow_map_depth);
+	// instead of taking a lot of samples whenpoisson sampling, we may be able to exit early,
+	// if the whole area that would be sampled is in the light or in shadow.
+	// to approximate this we take samples at the corners of the area.
+	// there are cases where the approximation is incorrect
+	vec2[4] exit_early_uvs;
+	exit_early_uvs[0] = uv + vec2(-1.0, -1.0) * uv_offset_multiplier;
+	exit_early_uvs[1] = uv + vec2( 1.0, -1.0) * uv_offset_multiplier;
+	exit_early_uvs[2] = uv + vec2(-1.0,  1.0) * uv_offset_multiplier;
+	exit_early_uvs[3] = uv + vec2( 1.0,  1.0) * uv_offset_multiplier;
+
+	float[5] early_samples = {
+		texture(shadow_map, vec3(uv, biased_depth)),
+		texture(shadow_map, vec3(exit_early_uvs[0], biased_depth)),
+		texture(shadow_map, vec3(exit_early_uvs[1], biased_depth)),
+		texture(shadow_map, vec3(exit_early_uvs[2], biased_depth)),
+		texture(shadow_map, vec3(exit_early_uvs[3], biased_depth))
+	};
+	if (
+		(early_samples[0] == 0.0 || early_samples[0] == 1.0)
+		&& early_samples[0] == early_samples[1]
+		&& early_samples[0] == early_samples[2]
+		&& early_samples[0] == early_samples[3]
+		&& early_samples[0] == early_samples[4]
+	) {
+		exit_early = true;
+		exit_early_one_minus_shadow = early_samples[0];
+		return;
 	}
 
-	return shadow / 9.0;
+	for (int i = 0; i < poisson_num_samples; ++i) {
+		poisson_uvs[i] = uv + poisson_disk[i] * uv_offset_multiplier;
+	}
+}
+
+float poisson_sample_shadow_map(
+	vec2[poisson_num_samples] poisson_uvs, float biased_depth
+) {
+	// poisson sampling
+	float one_minus_shadow = 0.0;
+	for (int i = 0; i < poisson_num_samples; ++i) {
+		// shadow_map is a depth texture, therefore we sample it with a shadow sampler
+		// the result is a single float value in the range [0,1]
+		one_minus_shadow += texture(
+			shadow_map, vec3(poisson_uvs[i], biased_depth)
+		);
+	}
+	return one_minus_shadow / float(poisson_num_samples);
 }
 
 void main() {
-	vec2[3][3] shadow_map_uv;
-	float current_depth;
-	if (bool(directional_light_shadow_enabled)) {
-		prepare_shadow_map_samples(shadow_map_uv, current_depth);
+	// out bool exit_early, out float exit_early_one_minus_shadow,
+	// out vec2[poisson_num_samples] poisson_uvs, out float biased_depth
+	bool shadow_exit_early;
+	float one_minus_shadow = 0.0;
+	vec2[poisson_num_samples] poissoned_shadow_map_uvs;
+	float biased_depth;
+	if (directional_light_shadow_enabled) {
+		prepare_shadow_map_samples(
+			shadow_exit_early, one_minus_shadow, poissoned_shadow_map_uvs, biased_depth
+		);
 	}
-	vec4[3][3] shadow_map_samples;
 
 	// sample all textures at the same time
 	vec4 t_albedo_tex = texture(albedo_tex, uv);
 	vec4 t_metallic_roughness_tex = texture(metallic_roughness_tex, uv);
 	vec4 t_normal_tex = texture(normal_tex, uv);
-	if (bool(directional_light_shadow_enabled)) {
-		for (int x = 0; x < 3; ++x)
-		for (int y = 0; y < 3; ++y) {
-			shadow_map_samples[x][y] = texture(shadow_map, shadow_map_uv[x][y]);
-		}
+	if (directional_light_shadow_enabled && !shadow_exit_early) {
+		one_minus_shadow = poisson_sample_shadow_map(
+			poissoned_shadow_map_uvs, biased_depth
+		);
 	}
 
 	// surface properties
@@ -101,14 +161,11 @@ void main() {
 	float metallic = t_metallic_roughness_tex.b * metallic_factor;
 	float roughness = t_metallic_roughness_tex.g * roughness_factor;
 
-	float shadow = 0.0;
-	if (bool(directional_light_shadow_enabled)) {
-		shadow = calculate_shadow(current_depth, shadow_map_samples);
-	}
-
 	// lambertian diffuse
 	float diffuse_lighting = clamp( dot(directional_light_world_direction, normal), 0,1 );
-	diffuse_lighting *= (1-shadow);
+	if (directional_light_shadow_enabled) {
+		diffuse_lighting *= one_minus_shadow;
+	}
 
 	// constant ambient lighting
 	float ambient_lighting = 0.07;
@@ -118,7 +175,9 @@ void main() {
 	vec3 half_vector = normalize(directional_light_world_direction + view_direction);
 	float specular_lighting = clamp( dot(half_vector, normal), 0,1 );
 	specular_lighting = pow(specular_lighting, (1.0 - roughness) * 100.0);
-	specular_lighting *= (1-shadow);
+	if (directional_light_shadow_enabled) {
+		specular_lighting *= one_minus_shadow;
+	}
 
 	const float specular_strength = 0.1;
 

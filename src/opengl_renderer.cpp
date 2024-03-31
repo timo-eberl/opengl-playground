@@ -120,51 +120,6 @@ void OpenGLRenderer::render(const Scene &scene, const ICamera &camera) {
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
-	// debug shadow map
-	if (false) {
-		clear();
-		glViewport(0, 0, resolution.x, resolution.y);
-		static bool setup_done = false;
-		static GLuint vao;
-		if (!setup_done) {
-			static const GLfloat positions[] = {
-				-3.0f, -1.0f,
-				 1.0f, -1.0f,
-				 1.0f,  3.0f,
-			};
-			glGenVertexArrays(1, &vao);
-			glBindVertexArray(vao);
-			GLuint pos_buffer = 0;
-			glGenBuffers(1, &pos_buffer);
-			glBindBuffer(GL_ARRAY_BUFFER, pos_buffer);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
-			glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, (GLvoid*)0);
-			glEnableVertexAttribArray(0);
-
-			glBindVertexArray(0);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-			setup_done = true;
-		}
-		const auto shader_program = assets::load_shader_program(
-			"default/shaders/debug.vert", "default/shaders/debug.frag"
-		);
-		const auto &shader_program_gpu_data = get_shader_program_gpu_data(shader_program);
-		glUseProgram(shader_program_gpu_data.id);
-		auto location = glGetUniformLocation(shader_program_gpu_data.id, "tex");
-		glUniform1i(location, 0);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, light_gpu_data.shadow_map);
-		glBindVertexArray(vao);
-
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-
-		glBindVertexArray(0);
-		glUseProgram(0);
-		glBindTexture(GL_TEXTURE_2D, 0);
-		return;
-	}
-
 	glViewport(0, 0, resolution.x, resolution.y);
 	if (scene.depth_test) glEnable(GL_DEPTH_TEST);
 	if (auto_clear) clear();

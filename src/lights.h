@@ -5,7 +5,7 @@
 namespace ron {
 
 struct Shadow {
-	glm::uvec2 map_size = glm::uvec2(1024, 1024);
+	glm::uvec2 map_size = glm::uvec2(1024);
 	// the size of the area shadows are visible in (side length of the square area)
 	// 100 means 50 from the camera position to the left, right, forward, backward
 	float frustum_size = 100.0f;
