@@ -88,10 +88,10 @@ int main() {
 
 				std::stringstream title_stream;
 				title_stream
-					<< "Ron | frame time: "
+					<< "Ron - frame time: "
 					<< std::fixed << std::setprecision(3) // specify decimal places
-					<< avg_frame_time_ms
-					<< " | FPS: "
+					<< avg_frame_time_ms << "ms"
+					<< " - fps: "
 					<< static_cast<int>(1000.0 / avg_frame_time_ms);
 				glfwSetWindowTitle(window,  + title_stream.str().c_str());
 			}
