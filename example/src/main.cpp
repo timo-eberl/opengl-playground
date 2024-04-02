@@ -10,6 +10,7 @@
 #include <ron.h>
 
 using namespace ron;
+using namespace std::chrono_literals;
 
 static const auto initial_resolution = glm::uvec2(1300, 900);
 
@@ -60,31 +61,39 @@ int main() {
 		initialize(window, state);
 
 		auto last_frame_time_point = std::chrono::high_resolution_clock::now();
-		auto frame_counter = 0;
-		auto last_fps_update = std::chrono::high_resolution_clock::now();
+		auto accumulated_frame_time = 0ns;
+		unsigned int accumulated_frame_time_count = 0;
 
 		while (!glfwWindowShouldClose(window)) {
 			process(window, state);
 			render(window, state);
 
 			// profiling
-			using namespace std::chrono_literals;
 			const auto now = std::chrono::high_resolution_clock::now();
 			const auto delta = now - last_frame_time_point;
 			last_frame_time_point = now;
 
-			// FPS in window title - pretty inaccurate measurement
-			frame_counter++;
-			const auto time_since_last_fps_update = now - last_fps_update;
-			static const auto fps_updates_per_second = 5.0; // if set to high, application crashes
-			if (time_since_last_fps_update > 1s / fps_updates_per_second) {
-				const auto fps = frame_counter * fps_updates_per_second;
-				std::stringstream title_stream;
-				title_stream << "Ron | FPS: " << fps;
-				glfwSetWindowTitle(window,  + title_stream.str().c_str());
+			// frametime in window title
+			static const auto update_interval = 250ms;
+			++accumulated_frame_time_count;
+			accumulated_frame_time += delta;
+			if (accumulated_frame_time >= update_interval) {
+				const auto avg_frame_time = std::chrono::duration<double>(
+					accumulated_frame_time / accumulated_frame_time_count
+				);
+				const double avg_frame_time_ms = avg_frame_time.count() * 1000.0;
 
-				frame_counter = 0;
-				last_fps_update = now;
+				accumulated_frame_time = 0ns;
+				accumulated_frame_time_count = 0;
+
+				std::stringstream title_stream;
+				title_stream
+					<< "Ron | frame time: "
+					<< std::fixed << std::setprecision(3) // specify decimal places
+					<< avg_frame_time_ms
+					<< " | FPS: "
+					<< static_cast<int>(1000.0 / avg_frame_time_ms);
+				glfwSetWindowTitle(window,  + title_stream.str().c_str());
 			}
 
 			glfwSwapBuffers(window);
