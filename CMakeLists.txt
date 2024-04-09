@@ -16,7 +16,19 @@ option(RON_BUILD_EXAMPLES "Build the Ron example programs" ON)
 
 if (NOT DEFINED RON_ASSET_DIRECTORY)
 	set(RON_ASSET_DIRECTORY ${PROJECT_SOURCE_DIR}/assets/)
-	message("RON_ASSET_DIRECTORY was not already defined. Default directory will be used: " ${RON_ASSET_DIRECTORY})
+	message(
+		"RON_ASSET_DIRECTORY was not already defined."
+		" Default directory will be used: " ${RON_ASSET_DIRECTORY}
+	)
+else()
+	message(
+		"RON_ASSET_DIRECTORY was defined as " ${RON_ASSET_DIRECTORY}"."
+		" Default assets will be copied into this directory."
+	)
+	file (
+		COPY ${PROJECT_SOURCE_DIR}/assets/default/
+		DESTINATION ${RON_ASSET_DIRECTORY}default/
+	)
 endif()
 
 # dependencies
