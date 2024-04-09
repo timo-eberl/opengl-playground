@@ -129,9 +129,9 @@ void create_scene(State& state) {
 	directional_light.world_direction = glm::normalize(glm::vec3(4.1f, 5.9f, -1.0f));
 	directional_light.shadow.enabled = true;
 	directional_light.shadow.map_size = glm::uvec2(512);
-	directional_light.shadow.bias = 0.02f;
+	directional_light.shadow.bias = 0.03f;
 	directional_light.shadow.far = 50.0f;
-	directional_light.shadow.frustum_size = 6.0f;
+	directional_light.shadow.frustum_size = 20.0f;
 	state.scene.set_directional_light(directional_light);
 
 	state.renderer->preload(state.scene);

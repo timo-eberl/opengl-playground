@@ -77,7 +77,7 @@ void prepare_shadow_map_samples(
 	// increase bias the steeper the angle of the light
 	float bias = max(
 		directional_light_shadow_bias * (1.0 - dot(world_normal,directional_light_world_direction)),
-		directional_light_shadow_bias * 0.01
+		directional_light_shadow_bias * 0.1
 	);
 	depth_minus_bias = current_depth - bias;
 
