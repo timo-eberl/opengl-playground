@@ -69,6 +69,7 @@ void OpenGLRenderer::render(const Scene &scene, const ICamera &camera) {
 		glBindFramebuffer(GL_FRAMEBUFFER, light_gpu_data.shadow_map_framebuffer);
 			glClear(GL_DEPTH_BUFFER_BIT);
 			glEnable(GL_DEPTH_TEST);
+			glDepthFunc(GL_LEQUAL);
 
 			const auto light_projection_matrix = glm::ortho(
 				-light->shadow.frustum_size, light->shadow.frustum_size,
@@ -127,7 +128,13 @@ void OpenGLRenderer::render(const Scene &scene, const ICamera &camera) {
 	}
 
 	glViewport(0, 0, resolution.x, resolution.y);
-	if (scene.depth_test) glEnable(GL_DEPTH_TEST);
+	if (scene.depth_test) {
+		glEnable(GL_DEPTH_TEST);
+	}
+	else {
+		glDisable(GL_DEPTH_TEST);
+	}
+	glDepthFunc(GL_LEQUAL);
 	if (auto_clear) clear();
 
 	const auto camera_world_position = glm::vec3(camera.get_model_matrix()[3]);
