@@ -21,7 +21,11 @@ struct DirectionalLight {
 	Shadow shadow;
 
 	glm::vec3 world_direction = glm::normalize(glm::vec3(4.1f, 5.9f, -1.0f));
-	glm::vec3 world_position = glm::vec3(0.0f, 10.0f, 0.0f);
+
+	// use this to manually position the shadow map
+	// the target position will be in the center of the shadow cameras frustum
+	bool use_custom_shadow_target_world_position = false;
+	glm::vec3 custom_shadow_target_world_position = glm::vec3(0.0f);
 
 	float intensity = 1.0f;
 };

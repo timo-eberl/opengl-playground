@@ -58,6 +58,11 @@ void OpenGLRenderer::init() {
 void OpenGLRenderer::render(const Scene &scene, const ICamera &camera) {
 	Uniforms render_cycle_uniforms = {};
 
+	const auto camera_world_position = glm::vec3(camera.get_model_matrix()[3]);
+	const auto view_matrix = glm::inverse(camera.get_model_matrix());
+	const auto projection_matrix = camera.get_projection_matrix();
+	const auto view_projection_matrix = projection_matrix * view_matrix;
+
 	// render shadow map
 	const auto light = scene.get_directional_light();
 	const auto &light_gpu_data = get_dir_light_gpu_data(
@@ -76,11 +81,18 @@ void OpenGLRenderer::render(const Scene &scene, const ICamera &camera) {
 				-light->shadow.frustum_size, light->shadow.frustum_size,
 				light->shadow.near, light->shadow.far
 			);
-			const auto light_view_matrix = glm::lookAt(
-				light->world_position,
-				light->world_position - light->world_direction,
-				glm::vec3(0.0f, 1.0f, 0.0f)
+
+			const auto cam_vector = glm::mat3(camera.get_model_matrix()) * glm::vec3(1.0f, 0.0f, 0.0f);
+			const auto light_frustum_center = light->use_custom_shadow_target_world_position
+				? light->custom_shadow_target_world_position
+				: camera_world_position;
+
+			auto light_view_matrix = glm::lookAt(
+				light_frustum_center + light->world_direction * light->shadow.far * 0.5f,
+				light_frustum_center,
+				cam_vector
 			);
+
 			light_space_matrix = light_projection_matrix * light_view_matrix;
 
 			render_cycle_uniforms["view_projection_matrix"] = make_uniform(light_space_matrix);
@@ -136,11 +148,6 @@ void OpenGLRenderer::render(const Scene &scene, const ICamera &camera) {
 	}
 	glDepthFunc(GL_LEQUAL);
 	if (auto_clear) clear();
-
-	const auto camera_world_position = glm::vec3(camera.get_model_matrix()[3]);
-	const auto view_matrix = glm::inverse(camera.get_model_matrix());
-	const auto projection_matrix = camera.get_projection_matrix();
-	const auto view_projection_matrix = projection_matrix * view_matrix;
 
 	render_cycle_uniforms["view_matrix"] = make_uniform(view_matrix);
 	render_cycle_uniforms["projection_matrix"] = make_uniform(projection_matrix);

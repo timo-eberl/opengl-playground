@@ -125,13 +125,14 @@ void create_scene(State& state) {
 	// state.scene.add(cube);
 
 	DirectionalLight directional_light = {};
-	directional_light.world_position = glm::vec3(4.1f, 5.9f, -1.0f);
+	directional_light.use_custom_shadow_target_world_position = true;
+	directional_light.custom_shadow_target_world_position = glm::vec3(0.0f);
 	directional_light.world_direction = glm::normalize(glm::vec3(4.1f, 5.9f, -1.0f));
 	directional_light.shadow.enabled = true;
-	directional_light.shadow.map_size = glm::uvec2(512);
-	directional_light.shadow.bias = 0.03f;
-	directional_light.shadow.far = 50.0f;
-	directional_light.shadow.frustum_size = 20.0f;
+	directional_light.shadow.map_size = glm::uvec2(1024);
+	directional_light.shadow.bias = 0.01f;
+	directional_light.shadow.far = 100.0f;
+	directional_light.shadow.frustum_size = 10.0f;
 	state.scene.set_directional_light(directional_light);
 
 	state.renderer->preload(state.scene);
