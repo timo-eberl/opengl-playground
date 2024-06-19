@@ -14,6 +14,7 @@ public:
 	CameraViewportControls(const glm::vec2 initial_rotation = glm::vec2(0.0f));
 	void update(GLFWwindow& window, ICamera &camera); // needs to be called every frame
 	void set_target(const glm::vec3 target);
+	glm::vec3 get_target() const;
 	float mouse_orbit_sensitivity = 1.0f;
 	float mouse_pan_sensitivity = 1.0f;
 

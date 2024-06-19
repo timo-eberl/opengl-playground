@@ -24,6 +24,10 @@ void CameraViewportControls::set_target(const glm::vec3 target) {
 	m_dirty = true;
 }
 
+glm::vec3 CameraViewportControls::get_target() const {
+	return m_target;
+}
+
 void CameraViewportControls::update(GLFWwindow& window, ICamera &camera) {
 	const bool shift_down = glfwGetKey(&window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
 	const bool mouse_down = glfwGetMouseButton(&window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
